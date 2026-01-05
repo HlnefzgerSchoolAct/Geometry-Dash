@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geometry Dash Clone</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Main Menu -->
+    <div id="mainMenu" class="menu active">
+        <h1 class="game-title">GEOMETRY DASH</h1>
+        <div class="menu-buttons">
+            <button class="menu-btn" onclick="selectLevel(0)">Level 1</button>
+            <button class="menu-btn" onclick="selectLevel(1)">Level 2</button>
+            <button class="menu-btn practice" onclick="togglePracticeMode()">Practice Mode: <span id="practiceStatus">OFF</span></button>
+        </div>
+    </div>
+
+    <!-- Game Container -->
+    <div id="gameContainer" class="hidden">
+        <canvas id="gameCanvas"></canvas>
+        
+        <!-- Game UI -->
+        <div id="gameUI">
+            <div class="top-bar">
+                <div class="stat">Attempt: <span id="attemptCount">0</span></div>
+                <div class="stat">Progress: <span id="progressPercent">0</span>%</div>
+                <button class="pause-btn" onclick="togglePause()">⏸</button>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <!-- Pause Menu -->
+        <div id="pauseMenu" class="menu hidden">
+            <h2>PAUSED</h2>
+            <button class="menu-btn" onclick="togglePause()">Resume</button>
+            <button class="menu-btn" onclick="restartLevel()">Restart</button>
+            <button class="menu-btn" onclick="exitToMenu()">Main Menu</button>
+        </div>
+
+        <!-- Death Screen -->
+        <div id="deathScreen" class="hidden">
+            <h2 class="death-title">GAME OVER</h2>
+            <div class="death-stats">
+                <p>Progress: <span id="deathProgress">0</span>%</p>
+            </div>
+            <button class="menu-btn" onclick="restartLevel()">Try Again</button>
+            <button class="menu-btn" onclick="exitToMenu()">Main Menu</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/audio.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/obstacles.js"></script>
+    <script src="js/levels.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
