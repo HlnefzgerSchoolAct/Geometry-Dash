@@ -21,7 +21,7 @@ class Game {
         
         // Camera
         this.camera = { x: 0, y: 0 };
-        this.scrollSpeed = 5;
+        this.scrollSpeed = 5.77; // Exact GD 1x speed (approximately 311 pixels/second at 60fps)
         
         // Game stats
         this.attemptCount = 0;
@@ -369,20 +369,32 @@ class Game {
     drawGround() {
         const groundY = this.currentLevel.groundY;
         
-        // Ground line
-        this.ctx.strokeStyle = '#00ff88';
-        this.ctx.lineWidth = 3;
-        this.ctx.shadowBlur = 10;
-        this.ctx.shadowColor = '#00ff88';
+        // Ground line - exact GD style with white/light color
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 4;
+        this.ctx.shadowBlur = 0;
         this.ctx.beginPath();
         this.ctx.moveTo(0, groundY);
         this.ctx.lineTo(this.canvas.width, groundY);
         this.ctx.stroke();
         
-        // Ground fill
+        // Ground fill - darker with subtle pattern
         this.ctx.shadowBlur = 0;
-        this.ctx.fillStyle = 'rgba(0, 255, 136, 0.1)';
+        this.ctx.fillStyle = '#1a1a1a';
         this.ctx.fillRect(0, groundY, this.canvas.width, this.canvas.height - groundY);
+        
+        // Ground grid pattern like GD
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+        this.ctx.lineWidth = 1;
+        const gridSize = 30;
+        const offsetX = this.camera.x % gridSize;
+        
+        for (let x = -offsetX; x < this.canvas.width; x += gridSize) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(x, groundY);
+            this.ctx.lineTo(x, this.canvas.height);
+            this.ctx.stroke();
+        }
     }
 
     gameLoop(currentTime = 0) {

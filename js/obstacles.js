@@ -14,13 +14,13 @@ class Obstacle {
         ctx.save();
         
         if (this.type === 'spike') {
-            // Draw triangle spike
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = '#ff0044';
-            ctx.fillStyle = '#ff0044';
-            ctx.strokeStyle = '#ff0044';
+            // Draw triangle spike - exact GD style
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#666666';
+            ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 2;
             
+            // Main spike triangle
             ctx.beginPath();
             ctx.moveTo(screenX + this.width / 2, this.y);
             ctx.lineTo(screenX + this.width, this.y + this.height);
@@ -29,66 +29,89 @@ class Obstacle {
             ctx.fill();
             ctx.stroke();
             
+            // Inner darker triangle for depth
+            ctx.fillStyle = '#444444';
+            ctx.beginPath();
+            ctx.moveTo(screenX + this.width / 2, this.y + this.height * 0.3);
+            ctx.lineTo(screenX + this.width * 0.7, this.y + this.height);
+            ctx.lineTo(screenX + this.width * 0.3, this.y + this.height);
+            ctx.closePath();
+            ctx.fill();
+            
         } else if (this.type === 'block') {
-            // Draw solid block
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = '#666';
-            ctx.fillStyle = '#444';
-            ctx.strokeStyle = '#888';
+            // Draw solid block - exact GD style with 3D effect
+            ctx.shadowBlur = 0;
+            
+            // Main block face
+            ctx.fillStyle = '#666666';
+            ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 3;
             ctx.fillRect(screenX, this.y, this.width, this.height);
             ctx.strokeRect(screenX, this.y, this.width, this.height);
             
-            // Grid pattern
-            ctx.strokeStyle = '#555';
-            ctx.lineWidth = 1;
-            for (let i = 0; i < this.width; i += 20) {
-                ctx.beginPath();
-                ctx.moveTo(screenX + i, this.y);
-                ctx.lineTo(screenX + i, this.y + this.height);
-                ctx.stroke();
-            }
+            // 3D bottom edge
+            ctx.fillStyle = '#333333';
+            ctx.beginPath();
+            ctx.moveTo(screenX, this.y + this.height);
+            ctx.lineTo(screenX + this.width, this.y + this.height);
+            ctx.lineTo(screenX + this.width, this.y + this.height + 5);
+            ctx.lineTo(screenX, this.y + this.height + 5);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 3D right edge
+            ctx.fillStyle = '#444444';
+            ctx.beginPath();
+            ctx.moveTo(screenX + this.width, this.y);
+            ctx.lineTo(screenX + this.width + 5, this.y);
+            ctx.lineTo(screenX + this.width + 5, this.y + this.height + 5);
+            ctx.lineTo(screenX + this.width, this.y + this.height);
+            ctx.closePath();
+            ctx.fill();
             
         } else if (this.type === 'sawblade') {
-            // Draw rotating sawblade
+            // Draw rotating sawblade - exact GD circular saw
             const centerX = screenX + this.width / 2;
             const centerY = this.y + this.height / 2;
             const radius = this.width / 2;
             
             ctx.translate(centerX, centerY);
-            ctx.rotate(Date.now() / 200);
+            ctx.rotate(Date.now() / 100); // Faster rotation like GD
             
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = '#ff0044';
-            ctx.fillStyle = '#ff0044';
-            ctx.strokeStyle = '#880022';
-            ctx.lineWidth = 3;
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#666666';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
             
-            // Draw spikes around circle
-            const spikes = 8;
+            // Draw spikes around circle - exactly like GD sawblade
+            const spikes = 12;
             ctx.beginPath();
             for (let i = 0; i < spikes; i++) {
                 const angle = (i / spikes) * Math.PI * 2;
-                const x1 = Math.cos(angle) * radius;
-                const y1 = Math.sin(angle) * radius;
-                const x2 = Math.cos(angle + Math.PI / spikes) * radius * 1.5;
-                const y2 = Math.sin(angle + Math.PI / spikes) * radius * 1.5;
-                const x3 = Math.cos(angle + Math.PI * 2 / spikes) * radius;
-                const y3 = Math.sin(angle + Math.PI * 2 / spikes) * radius;
+                const nextAngle = ((i + 1) / spikes) * Math.PI * 2;
+                const midAngle = (angle + nextAngle) / 2;
                 
-                ctx.moveTo(x1, y1);
+                const x1 = Math.cos(angle) * radius * 0.7;
+                const y1 = Math.sin(angle) * radius * 0.7;
+                const x2 = Math.cos(midAngle) * radius;
+                const y2 = Math.sin(midAngle) * radius;
+                
+                if (i === 0) ctx.moveTo(x1, y1);
+                else ctx.lineTo(x1, y1);
                 ctx.lineTo(x2, y2);
-                ctx.lineTo(x3, y3);
             }
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
             
             // Center circle
-            ctx.fillStyle = '#440011';
+            ctx.fillStyle = '#333333';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.arc(0, 0, radius * 0.3, 0, Math.PI * 2);
             ctx.fill();
+            ctx.stroke();
         }
         
         ctx.restore();
@@ -237,33 +260,63 @@ class Portal {
         ctx.save();
         
         let color;
-        if (this.mode === 'cube') color = '#00ff88';
-        else if (this.mode === 'ship') color = '#00ccff';
-        else if (this.mode === 'ball') color = '#ff00ff';
-        else if (this.mode === 'wave') color = '#ffff00';
+        // Exact GD portal colors
+        if (this.mode === 'cube') color = '#00ff00'; // Bright green
+        else if (this.mode === 'ship') color = '#ff6600'; // Orange
+        else if (this.mode === 'ball') color = '#ff00ff'; // Magenta
+        else if (this.mode === 'wave') color = '#0099ff'; // Blue
+        else if (this.mode === 'ufo') color = '#00ffff'; // Cyan
+        else if (this.mode === 'robot') color = '#ffff00'; // Yellow
+        else if (this.mode === 'spider') color = '#aa00ff'; // Purple
         
-        // Portal frame
-        ctx.shadowBlur = 25;
+        // Portal frame - exact GD style
+        ctx.shadowBlur = 20;
         ctx.shadowColor = color;
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 5;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 4;
         ctx.strokeRect(screenX, this.y, this.width, this.height);
         
-        // Portal fill (transparent)
+        // Inner colored frame
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(screenX + 3, this.y + 3, this.width - 6, this.height - 6);
+        
+        // Portal fill (transparent colored)
         ctx.fillStyle = color;
-        ctx.globalAlpha = 0.2;
+        ctx.globalAlpha = 0.15;
         ctx.fillRect(screenX, this.y, this.width, this.height);
         
-        // Swirling effect
-        ctx.globalAlpha = 0.5;
-        for (let i = 0; i < 3; i++) {
-            const offset = (Date.now() / 1000 + i * Math.PI * 2 / 3) % (Math.PI * 2);
-            const x = screenX + this.width / 2 + Math.cos(offset) * this.width * 0.3;
-            const y = this.y + this.height / 2 + Math.sin(offset) * this.height * 0.3;
-            
-            ctx.fillStyle = color;
+        // Icon in center based on mode
+        ctx.globalAlpha = 0.8;
+        ctx.fillStyle = '#ffffff';
+        const centerX = screenX + this.width / 2;
+        const centerY = this.y + this.height / 2;
+        const iconSize = this.width * 0.3;
+        
+        if (this.mode === 'cube') {
+            // Draw small cube icon
+            ctx.fillRect(centerX - iconSize / 2, centerY - iconSize / 2, iconSize, iconSize);
+        } else if (this.mode === 'ship') {
+            // Draw small triangle
             ctx.beginPath();
-            ctx.arc(x, y, 5, 0, Math.PI * 2);
+            ctx.moveTo(centerX + iconSize / 2, centerY);
+            ctx.lineTo(centerX - iconSize / 2, centerY - iconSize / 2);
+            ctx.lineTo(centerX - iconSize / 2, centerY + iconSize / 2);
+            ctx.closePath();
+            ctx.fill();
+        } else if (this.mode === 'ball') {
+            // Draw small circle
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, iconSize / 2, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (this.mode === 'wave') {
+            // Draw wave symbol
+            ctx.beginPath();
+            ctx.moveTo(centerX - iconSize / 2, centerY);
+            ctx.lineTo(centerX, centerY - iconSize / 2);
+            ctx.lineTo(centerX + iconSize / 2, centerY);
+            ctx.lineTo(centerX, centerY + iconSize / 2);
+            ctx.closePath();
             ctx.fill();
         }
         
