@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Geometry Dash Clone</title>
+    <title>Shape Dash</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <!-- Main Menu -->
     <div id="mainMenu" class="menu active">
-        <h1 class="game-title">GEOMETRY DASH</h1>
+        <h1 class="game-title">SHAPE DASH</h1>
         <div class="menu-buttons">
             <button class="menu-btn" onclick="selectLevel(0)">Level 1</button>
             <button class="menu-btn" onclick="selectLevel(1)">Level 2</button>
+            <button class="menu-btn" onclick="selectLevel(2)">Level 3</button>
             <button class="menu-btn practice" onclick="togglePracticeMode()">Practice Mode: <span id="practiceStatus">OFF</span></button>
         </div>
     </div>
@@ -48,6 +49,16 @@
                 <p>Progress: <span id="deathProgress">0</span>%</p>
             </div>
             <button class="menu-btn" onclick="restartLevel()">Try Again</button>
+            <button class="menu-btn" onclick="exitToMenu()">Main Menu</button>
+        </div>
+
+        <!-- Level Complete Screen -->
+        <div id="completeScreen" class="hidden">
+            <h2 class="complete-title">LEVEL COMPLETE!</h2>
+            <div class="complete-stats">
+                <p>Attempts: <span id="completeAttempts">0</span></p>
+                <p>Coins: <span id="completeCoins">0</span>/<span id="totalCoins">0</span></p>
+            </div>
             <button class="menu-btn" onclick="exitToMenu()">Main Menu</button>
         </div>
     </div>

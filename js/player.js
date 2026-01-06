@@ -7,7 +7,7 @@ class Player {
         this.velocityY = 0;
         this.velocityX = 0;
         
-        // Exact Geometry Dash physics values
+        // Physics values
         this.gravity = 0.958;
         this.jumpForce = -11.5;
         this.rotation = 0;
@@ -23,8 +23,8 @@ class Player {
         this.trail = [];
         this.maxTrailLength = 20;
         
-        // Colors - Exact GD default colors
-        this.primaryColor = '#00ff00'; // Bright green like GD
+        // Colors - Default bright colors
+        this.primaryColor = '#00ff00'; // Bright green
         this.secondaryColor = '#00cc00'; // Darker green
         this.trailColor = 'rgba(0, 255, 0, 0.5)';
         
@@ -42,7 +42,7 @@ class Player {
                 audioManager.playJump();
             }
         } else if (this.mode === 'ship') {
-            this.velocityY = this.jumpForce * 0.45; // GD ship has lighter gravity
+            this.velocityY = this.jumpForce * 0.45; // Ship has lighter gravity
             audioManager.playJump();
         } else if (this.mode === 'ball') {
             this.isFlipped = !this.isFlipped;
@@ -77,7 +77,7 @@ class Player {
             return;
         }
 
-        // Apply gravity based on mode (exact GD values)
+        // Apply gravity based on mode
         if (this.mode === 'cube' || this.mode === 'robot') {
             this.velocityY += this.gravity;
         } else if (this.mode === 'ball') {
@@ -255,7 +255,7 @@ class Player {
             return;
         }
 
-        // Render trail - exact GD style
+        // Render trail
         this.trail.forEach((particle, index) => {
             const alpha = particle.alpha * (index / this.trail.length);
             ctx.fillStyle = `rgba(0, 255, 0, ${alpha * 0.4})`;
@@ -269,7 +269,7 @@ class Player {
         if (this.mode === 'cube') {
             ctx.rotate(this.rotation * Math.PI / 180);
             
-            // Draw cube exactly like GD - with outline and inner square
+            // Draw cube with outline and inner square
             ctx.shadowBlur = 15;
             ctx.shadowColor = this.primaryColor;
             
@@ -287,7 +287,7 @@ class Player {
             ctx.fillRect(-this.size / 2.5, -this.size / 2.5, this.size / 1.25, this.size / 1.25);
             
         } else if (this.mode === 'ship') {
-            // Draw ship exactly like GD - triangle with fire trail
+            // Draw ship - triangle with fire trail
             ctx.shadowBlur = 15;
             ctx.shadowColor = '#00ffff';
             ctx.fillStyle = '#00ffff';
@@ -313,7 +313,7 @@ class Player {
             ctx.fill();
             
         } else if (this.mode === 'ball') {
-            // Draw ball exactly like GD - circle with rotation indicator
+            // Draw ball - circle with rotation indicator
             ctx.rotate(this.rotation * Math.PI / 180);
             ctx.shadowBlur = 15;
             ctx.shadowColor = '#ff00ff';
@@ -344,7 +344,7 @@ class Player {
             ctx.stroke();
             
         } else if (this.mode === 'wave') {
-            // Draw wave exactly like GD - diamond shape with trail
+            // Draw wave - diamond shape with trail
             ctx.shadowBlur = 15;
             ctx.shadowColor = '#ffff00';
             ctx.fillStyle = '#ffff00';
@@ -420,13 +420,13 @@ class Player {
     }
 
     renderDeathParticles(ctx) {
-        // Exact GD death particle pattern - square particles exploding outward
+        // Death particle pattern - square particles exploding outward
         this.deathParticles.forEach(particle => {
             ctx.fillStyle = `rgba(0, 255, 0, ${particle.alpha})`;
             ctx.shadowBlur = 10;
             ctx.shadowColor = '#00ff00';
             
-            // Draw small square particles like GD
+            // Draw small square particles
             ctx.save();
             ctx.translate(particle.x, particle.y);
             ctx.rotate(particle.velocityX / 5); // Slight rotation based on velocity
@@ -453,7 +453,7 @@ class Player {
         this.mode = newMode;
         this.ufoJumpCooldown = 0;
         
-        // Update colors based on mode - exact GD colors
+        // Update colors based on mode
         if (newMode === 'cube') {
             this.primaryColor = '#00ff00';
             this.secondaryColor = '#00cc00';
