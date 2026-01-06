@@ -157,7 +157,7 @@ class Game {
     startLevel(levelIndex) {
         // Validate level index
         if (levelIndex < 0 || levelIndex >= LEVELS.length) {
-            console.error('Invalid level index:', levelIndex);
+            console.error(`Invalid level index: ${levelIndex}. Valid range is 0-${LEVELS.length - 1}`);
             return;
         }
         

@@ -77,7 +77,6 @@ class Player {
     update(groundY, obstacles, orbs, coins, camera) {
         if (this.isDead) {
             this.updateDeathParticles();
-            this.updateLandingParticles();
             return;
         }
 
@@ -109,7 +108,7 @@ class Player {
             this.y = groundY - this.size;
             this.velocityY = 0;
             
-            // Create landing particles when landing (not already grounded)
+            // Create landing particles when landing (transitioning from air to ground)
             if (!this.isGrounded && this.mode === 'cube') {
                 this.createLandingParticles();
             }
@@ -298,7 +297,6 @@ class Player {
     render(ctx) {
         if (this.isDead) {
             this.renderDeathParticles(ctx);
-            this.renderLandingParticles(ctx);
             return;
         }
 
