@@ -29,6 +29,7 @@ class Game {
         this.backgroundParticles = [];
         this.parallaxLayers = [];
         this.pulseIntensity = 0;
+        this.respawnFade = 0; // For fade-in effect on respawn
         this.initBackgroundEffects();
         
         // Game stats
@@ -244,6 +245,9 @@ class Game {
         document.getElementById('attemptCount').textContent = this.attemptCount;
         document.getElementById('deathScreen').classList.add('hidden');
         
+        // Respawn fade-in effect
+        this.respawnFade = 1.0;
+        
         this.state = 'playing';
     }
 
@@ -284,6 +288,12 @@ class Game {
         // Update pulse intensity based on gameplay
         const progress = this.camera.x / this.currentLevel.length;
         this.pulseIntensity = Math.sin(Date.now() / 500) * 0.3 + 0.5;
+
+        // Update respawn fade
+        if (this.respawnFade > 0) {
+            this.respawnFade -= 0.02; // Fade out quickly
+            if (this.respawnFade < 0) this.respawnFade = 0;
+        }
 
         // Update camera shake
         if (this.cameraShake.intensity > 0) {
@@ -357,6 +367,10 @@ class Game {
     handleDeath() {
         this.state = 'dead';
         this.cameraShake.intensity = 15; // Trigger screen shake
+        
+        // Screen flash effect
+        this.flashScreen('#ff0000', 0.5);
+        
         const progress = Math.floor((this.camera.x / this.currentLevel.length) * 100);
         document.getElementById('deathProgress').textContent = progress;
         document.getElementById('deathScreen').classList.remove('hidden');
@@ -364,6 +378,9 @@ class Game {
 
     handleLevelComplete() {
         this.state = 'complete';
+        
+        // Screen flash effect
+        this.flashScreen('#00ff00', 0.3);
         
         // Update complete screen stats
         document.getElementById('completeAttempts').textContent = this.attemptCount;
@@ -375,6 +392,33 @@ class Game {
         
         // Play completion sound (reuse coin sound for now)
         audioManager.playCoin();
+    }
+
+    flashScreen(color, intensity) {
+        // Create flash overlay
+        const flash = document.createElement('div');
+        flash.style.position = 'fixed';
+        flash.style.top = '0';
+        flash.style.left = '0';
+        flash.style.width = '100%';
+        flash.style.height = '100%';
+        flash.style.backgroundColor = color;
+        flash.style.opacity = intensity;
+        flash.style.pointerEvents = 'none';
+        flash.style.zIndex = '9999';
+        flash.style.transition = 'opacity 0.5s ease-out';
+        
+        document.body.appendChild(flash);
+        
+        // Fade out
+        setTimeout(() => {
+            flash.style.opacity = '0';
+        }, 50);
+        
+        // Remove after animation
+        setTimeout(() => {
+            document.body.removeChild(flash);
+        }, 600);
     }
 
     render() {
@@ -465,6 +509,12 @@ class Game {
 
         // Restore context after camera shake
         this.ctx.restore();
+
+        // Respawn fade overlay
+        if (this.respawnFade > 0) {
+            this.ctx.fillStyle = `rgba(0, 0, 0, ${this.respawnFade})`;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
     }
 
     interpolateColor(color1, color2, factor) {
