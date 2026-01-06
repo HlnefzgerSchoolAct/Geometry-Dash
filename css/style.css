@@ -6,11 +6,21 @@
 
 body {
     font-family: 'Russo One', 'Arial Black', sans-serif;
-    background: linear-gradient(135deg, #0a0a1e 0%, #1a1a3e 100%);
+    background: linear-gradient(135deg, #0f0f2e 0%, #1a0f3e 50%, #2a1a4e 100%);
     color: #fff;
     overflow: hidden;
     width: 100vw;
     height: 100vh;
+    animation: backgroundPulse 4s ease-in-out infinite;
+}
+
+@keyframes backgroundPulse {
+    0%, 100% {
+        background: linear-gradient(135deg, #0f0f2e 0%, #1a0f3e 50%, #2a1a4e 100%);
+    }
+    50% {
+        background: linear-gradient(135deg, #1a1a3e 0%, #2a1a4e 50%, #3a2a5e 100%);
+    }
 }
 
 /* Menu Styles */
@@ -24,7 +34,7 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(135deg, #0a0a1e 0%, #1a1a3e 100%);
+    background: linear-gradient(135deg, #0f0f2e 0%, #1a0f3e 50%, #2a1a4e 100%);
     z-index: 100;
     transition: opacity 0.3s ease;
 }

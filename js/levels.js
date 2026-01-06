@@ -82,6 +82,12 @@ const LEVELS = [
         ],
         portals: [
             // No mode changes in level 1
+        ],
+        jumpPads: [
+            { x: 600, y: 480, width: 60, height: 20, type: 'yellow' },
+            { x: 1600, y: 480, width: 60, height: 20, type: 'yellow' },
+            { x: 2850, y: 480, width: 60, height: 20, type: 'pink' },
+            { x: 4350, y: 480, width: 60, height: 20, type: 'yellow' },
         ]
     },
     
@@ -163,6 +169,15 @@ const LEVELS = [
             { x: 3700, y: 350, width: 40, height: 150, mode: 'cube' },
             { x: 4700, y: 350, width: 40, height: 150, mode: 'wave' },
             { x: 5450, y: 350, width: 40, height: 150, mode: 'cube' },
+            // Speed portals
+            { x: 800, y: 350, width: 40, height: 150, mode: 'speed_fast', portalType: 'speed' },
+            { x: 2700, y: 350, width: 40, height: 150, mode: 'speed_normal', portalType: 'speed' },
+        ],
+        jumpPads: [
+            { x: 450, y: 480, width: 60, height: 20, type: 'yellow' },
+            { x: 1100, y: 480, width: 60, height: 20, type: 'pink' },
+            { x: 2500, y: 480, width: 60, height: 20, type: 'yellow' },
+            { x: 4200, y: 480, width: 60, height: 20, type: 'yellow' },
         ]
     },
     
@@ -258,6 +273,24 @@ const LEVELS = [
             { x: 4000, y: 350, width: 40, height: 150, mode: 'ball' },
             { x: 4900, y: 350, width: 40, height: 150, mode: 'wave' },
             { x: 5700, y: 350, width: 40, height: 150, mode: 'cube' },
+            // Speed portals
+            { x: 700, y: 350, width: 40, height: 150, mode: 'speed_fast', portalType: 'speed' },
+            { x: 3100, y: 350, width: 40, height: 150, mode: 'speed_faster', portalType: 'speed' },
+            { x: 4800, y: 350, width: 40, height: 150, mode: 'speed_normal', portalType: 'speed' },
+            // Gravity portals
+            { x: 2300, y: 350, width: 40, height: 150, mode: 'gravity_flip', portalType: 'gravity' },
+            { x: 3000, y: 350, width: 40, height: 150, mode: 'gravity_normal', portalType: 'gravity' },
+            // Size portals
+            { x: 1500, y: 350, width: 40, height: 150, mode: 'size_mini', portalType: 'size' },
+            { x: 2200, y: 350, width: 40, height: 150, mode: 'size_normal', portalType: 'size' },
+        ],
+        jumpPads: [
+            { x: 350, y: 480, width: 60, height: 20, type: 'yellow' },
+            { x: 800, y: 480, width: 60, height: 20, type: 'pink' },
+            { x: 1700, y: 480, width: 60, height: 20, type: 'yellow' },
+            { x: 3900, y: 480, width: 60, height: 20, type: 'yellow' },
+            { x: 5650, y: 480, width: 60, height: 20, type: 'pink' },
+            { x: 6150, y: 480, width: 60, height: 20, type: 'red' },
         ]
     }
 ];
@@ -268,7 +301,8 @@ function createLevelObjects(levelData) {
         obstacles: levelData.obstacles.map(o => new Obstacle(o.x, o.y, o.width, o.height, o.type)),
         orbs: levelData.orbs.map(o => new Orb(o.x, o.y, o.size, o.type)),
         coins: levelData.coins.map(c => new Coin(c.x, c.y, c.size)),
-        portals: levelData.portals.map(p => new Portal(p.x, p.y, p.width, p.height, p.mode)),
+        portals: levelData.portals.map(p => new Portal(p.x, p.y, p.width, p.height, p.mode, p.portalType || 'mode')),
+        jumpPads: (levelData.jumpPads || []).map(j => new JumpPad(j.x, j.y, j.width, j.height, j.type)),
         name: levelData.name,
         length: levelData.length,
         groundY: levelData.groundY,

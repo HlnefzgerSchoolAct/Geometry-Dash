@@ -18,6 +18,8 @@ class Player {
         // Game modes
         this.mode = 'cube'; // cube, ship, ball, wave, ufo, robot, spider
         this.isFlipped = false; // For ball mode gravity flip
+        this.gravityFlipped = false; // For gravity portals
+        this.isMini = false; // For size portals
         
         // Trail particles
         this.trail = [];
@@ -80,55 +82,74 @@ class Player {
             return;
         }
 
-        // Apply gravity based on mode
+        // Apply gravity based on mode and gravity flip
+        let gravityMultiplier = this.gravityFlipped ? -1 : 1;
+        
         if (this.mode === 'cube' || this.mode === 'robot') {
-            this.velocityY += this.gravity;
+            this.velocityY += this.gravity * gravityMultiplier;
         } else if (this.mode === 'ball') {
             if (this.isFlipped) {
-                this.velocityY += this.gravity * 0.85;
+                this.velocityY += this.gravity * 0.85 * gravityMultiplier;
             } else {
-                this.velocityY += this.gravity * 0.85;
+                this.velocityY += this.gravity * 0.85 * gravityMultiplier;
             }
         } else if (this.mode === 'ship') {
-            this.velocityY += this.gravity * 0.45; // Ship has much lighter gravity
+            this.velocityY += this.gravity * 0.45 * gravityMultiplier; // Ship has much lighter gravity
         } else if (this.mode === 'wave') {
-            this.velocityY += this.gravity * 0.6;
+            this.velocityY += this.gravity * 0.6 * gravityMultiplier;
         } else if (this.mode === 'ufo') {
-            this.velocityY += this.gravity * 0.75;
+            this.velocityY += this.gravity * 0.75 * gravityMultiplier;
             if (this.ufoJumpCooldown > 0) this.ufoJumpCooldown--;
         } else if (this.mode === 'spider') {
-            this.velocityY += this.gravity * 1.1;
+            this.velocityY += this.gravity * 1.1 * gravityMultiplier;
         }
 
         // Update position
         this.y += this.velocityY;
 
-        // Ground collision
-        if (this.y + this.size >= groundY) {
-            this.y = groundY - this.size;
-            this.velocityY = 0;
-            
-            // Create landing particles when landing (transitioning from air to ground)
-            if (!this.isGrounded && this.mode === 'cube') {
-                this.createLandingParticles();
+        // Ground collision (handle both normal and flipped gravity)
+        if (!this.gravityFlipped) {
+            if (this.y + this.size >= groundY) {
+                this.y = groundY - this.size;
+                this.velocityY = 0;
+                
+                // Create landing particles when landing (transitioning from air to ground)
+                if (!this.isGrounded && this.mode === 'cube') {
+                    this.createLandingParticles();
+                }
+                
+                this.isGrounded = true;
+                
+                if (this.mode === 'cube') {
+                    this.rotation = Math.round(this.rotation / 90) * 90;
+                }
+            } else {
+                this.isGrounded = false;
             }
-            
-            this.isGrounded = true;
-            
-            if (this.mode === 'cube') {
-                this.rotation = Math.round(this.rotation / 90) * 90;
+
+            // Ceiling collision
+            if (this.y <= 0) {
+                this.y = 0;
+                this.velocityY = 0;
             }
         } else {
-            this.isGrounded = false;
-        }
-
-        // Ceiling collision
-        if (this.y <= 0) {
-            this.y = 0;
-            this.velocityY = 0;
-            
-            if (this.mode === 'cube' && this.isFlipped) {
+            // Flipped gravity - ceiling becomes ground
+            if (this.y <= 0) {
+                this.y = 0;
+                this.velocityY = 0;
                 this.isGrounded = true;
+                
+                if (this.mode === 'cube') {
+                    this.rotation = Math.round(this.rotation / 90) * 90;
+                }
+            } else {
+                this.isGrounded = false;
+            }
+            
+            // Floor becomes ceiling
+            if (this.y + this.size >= groundY) {
+                this.y = groundY - this.size;
+                this.velocityY = 0;
             }
         }
 
@@ -262,33 +283,65 @@ class Player {
         this.isDead = true;
         audioManager.playDeath();
         
-        // Create more satisfying death particles in an explosion pattern
-        const particleCount = 30;
-        for (let i = 0; i < particleCount; i++) {
-            const angle = (i / particleCount) * Math.PI * 2;
-            const speed = 5 + Math.random() * 5;
+        // Create iconic GD circular explosion pattern with particles in a ring
+        const particleCount = 40;
+        const rings = 3; // Multiple rings for better effect
+        
+        for (let ring = 0; ring < rings; ring++) {
+            const ringParticles = particleCount / rings;
+            for (let i = 0; i < ringParticles; i++) {
+                const angle = (i / ringParticles) * Math.PI * 2;
+                const speed = 6 + ring * 2 + Math.random() * 3;
+                const delay = ring * 0.02; // Slight delay between rings
+                
+                this.deathParticles.push({
+                    x: this.x + this.size / 2,
+                    y: this.y + this.size / 2,
+                    velocityX: Math.cos(angle) * speed,
+                    velocityY: Math.sin(angle) * speed,
+                    size: (4 - ring) + Math.random() * 4,
+                    alpha: 1 - (ring * 0.2),
+                    rotation: angle,
+                    rotationSpeed: (Math.random() - 0.5) * 0.4,
+                    color: ring === 0 ? '#ffffff' : ring === 1 ? this.primaryColor : this.secondaryColor,
+                    age: 0,
+                    delay: delay
+                });
+            }
+        }
+        
+        // Add center flash particles
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2;
             this.deathParticles.push({
                 x: this.x + this.size / 2,
                 y: this.y + this.size / 2,
-                velocityX: Math.cos(angle) * speed,
-                velocityY: Math.sin(angle) * speed,
-                size: Math.random() * 6 + 3,
+                velocityX: Math.cos(angle) * 12,
+                velocityY: Math.sin(angle) * 12,
+                size: 8,
                 alpha: 1,
-                rotation: Math.random() * Math.PI * 2,
-                rotationSpeed: (Math.random() - 0.5) * 0.3,
-                color: this.primaryColor
+                rotation: angle,
+                rotationSpeed: 0.5,
+                color: '#ffffff',
+                age: 0,
+                delay: 0
             });
         }
     }
 
     updateDeathParticles() {
         this.deathParticles.forEach(particle => {
-            particle.x += particle.velocityX;
-            particle.y += particle.velocityY;
-            particle.velocityY += 0.4; // Gravity
-            particle.velocityX *= 0.98; // Air resistance
-            particle.rotation += particle.rotationSpeed;
-            particle.alpha *= 0.95;
+            particle.age += 0.016; // Approximately 60fps
+            
+            // Only update if delay has passed
+            if (particle.age >= particle.delay) {
+                particle.x += particle.velocityX;
+                particle.y += particle.velocityY;
+                particle.velocityY += 0.3; // Gravity
+                particle.velocityX *= 0.99; // Air resistance
+                particle.rotation += particle.rotationSpeed;
+                particle.alpha *= 0.96; // Slower fade for better visibility
+            }
         });
         
         this.deathParticles = this.deathParticles.filter(p => p.alpha > 0.01);
@@ -324,38 +377,56 @@ class Player {
         if (this.mode === 'cube') {
             ctx.rotate(this.rotation * Math.PI / 180);
             
-            // Multi-layer glow effect
-            ctx.shadowBlur = 25;
+            // Multi-layer glow effect - more intense
+            ctx.shadowBlur = 30;
             ctx.shadowColor = this.primaryColor;
             
-            // Outer glow layer
+            // Outer glow layer (larger)
             ctx.fillStyle = this.primaryColor;
-            ctx.globalAlpha = 0.3;
-            ctx.fillRect(-this.size / 1.8, -this.size / 1.8, this.size * 1.1, this.size * 1.1);
+            ctx.globalAlpha = 0.4;
+            ctx.fillRect(-this.size / 1.6, -this.size / 1.6, this.size * 1.25, this.size * 1.25);
             ctx.globalAlpha = 1;
             
-            // Main cube
-            ctx.fillStyle = this.primaryColor;
+            // 3D depth effect - bottom shadow
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            ctx.fillRect(-this.size / 2 + 4, -this.size / 2 + 4, this.size, this.size);
+            
+            // Main cube with gradient for depth
+            const cubeGradient = ctx.createLinearGradient(
+                -this.size / 2, -this.size / 2,
+                this.size / 2, this.size / 2
+            );
+            cubeGradient.addColorStop(0, this.primaryColor);
+            cubeGradient.addColorStop(1, this.secondaryColor);
+            
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = this.primaryColor;
+            ctx.fillStyle = cubeGradient;
             ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
             
-            // Strong white outline
+            // Strong white outline (GD characteristic)
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 3;
-            ctx.shadowBlur = 5;
+            ctx.lineWidth = 4;
+            ctx.shadowBlur = 8;
             ctx.shadowColor = '#ffffff';
             ctx.strokeRect(-this.size / 2, -this.size / 2, this.size, this.size);
             
-            // Inner square with slight offset (characteristic GD look)
+            // Inner square with slight offset (iconic GD 3D look)
             ctx.shadowBlur = 0;
             ctx.fillStyle = this.secondaryColor;
-            const innerSize = this.size / 1.5;
-            const offset = 1;
+            const innerSize = this.size / 1.8;
+            const offset = 2;
             ctx.fillRect(-innerSize / 2 + offset, -innerSize / 2 + offset, innerSize, innerSize);
             
-            // Inner square outline
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
-            ctx.lineWidth = 1;
+            // Inner square outline with darker color
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.lineWidth = 2;
             ctx.strokeRect(-innerSize / 2 + offset, -innerSize / 2 + offset, innerSize, innerSize);
+            
+            // Top highlight for 3D effect
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillRect(-this.size / 2, -this.size / 2, this.size, 4);
             
         } else if (this.mode === 'ship') {
             // More angular ship design
@@ -567,28 +638,46 @@ class Player {
     }
 
     renderDeathParticles(ctx) {
-        // Death particle pattern - square particles exploding outward with rotation
+        // Death particle pattern - iconic GD circular explosion with rings
         this.deathParticles.forEach(particle => {
+            // Only render if delay has passed
+            if (particle.age < particle.delay) return;
+            
+            // Create intense glow effect
             const gradient = ctx.createRadialGradient(
                 particle.x, particle.y, 0,
-                particle.x, particle.y, particle.size
+                particle.x, particle.y, particle.size * 1.5
             );
-            gradient.addColorStop(0, `rgba(0, 255, 0, ${particle.alpha})`);
-            gradient.addColorStop(0.5, `rgba(125, 255, 125, ${particle.alpha * 0.7})`);
-            gradient.addColorStop(1, `rgba(0, 255, 0, ${particle.alpha * 0.3})`);
+            
+            const color = particle.color;
+            const r = parseInt(color.slice(1, 3), 16);
+            const g = parseInt(color.slice(3, 5), 16);
+            const b = parseInt(color.slice(5, 7), 16);
+            
+            gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${particle.alpha})`);
+            gradient.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, ${particle.alpha * 0.6})`);
+            gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
             
             ctx.fillStyle = gradient;
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = '#00ff00';
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = color;
             
-            // Draw rotating square particles
+            // Draw rotating square particles with glow
             ctx.save();
+            ctx.globalAlpha = particle.alpha;
             ctx.translate(particle.x, particle.y);
             ctx.rotate(particle.rotation);
             ctx.fillRect(-particle.size / 2, -particle.size / 2, particle.size, particle.size);
+            
+            // Add white outline for extra pop
+            ctx.strokeStyle = `rgba(255, 255, 255, ${particle.alpha * 0.8})`;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(-particle.size / 2, -particle.size / 2, particle.size, particle.size);
+            
             ctx.restore();
         });
         ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
     }
 
     renderLandingParticles(ctx) {
@@ -617,6 +706,9 @@ class Player {
         this.landingParticles = [];
         this.mode = 'cube';
         this.isFlipped = false;
+        this.gravityFlipped = false;
+        this.isMini = false;
+        this.size = 30; // Reset to normal size
     }
 
     changeMode(newMode) {

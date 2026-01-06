@@ -367,14 +367,127 @@ class Coin {
     }
 }
 
-// Portal for mode changes
-class Portal {
-    constructor(x, y, width, height, mode) {
+// JumpPad - Ground-based jump pads
+class JumpPad {
+    constructor(x, y, width, height, type) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
-        this.mode = mode; // cube, ship, ball, wave
+        this.type = type; // yellow, pink, red
+        this.activated = false;
+        this.animationTime = 0;
+    }
+
+    activate(player) {
+        if (this.type === 'yellow') {
+            player.velocityY = -16; // Medium jump
+        } else if (this.type === 'pink') {
+            player.velocityY = -20; // High jump
+        } else if (this.type === 'red') {
+            player.velocityY = -24; // Very high jump
+        }
+        this.activated = true;
+        this.animationTime = 10; // Frames for animation
+    }
+
+    update() {
+        if (this.animationTime > 0) {
+            this.animationTime--;
+        }
+        if (this.animationTime === 0) {
+            this.activated = false;
+        }
+    }
+
+    render(ctx, camera) {
+        const screenX = this.x - camera.x;
+        
+        ctx.save();
+        
+        let color;
+        if (this.type === 'yellow') color = '#ffff00';
+        else if (this.type === 'pink') color = '#ff00ff';
+        else if (this.type === 'red') color = '#ff0000';
+        
+        // Compression animation when activated
+        const compression = this.activated ? (1 - this.animationTime / 10) * 0.3 : 0;
+        const compressedHeight = this.height * (1 - compression);
+        const offsetY = this.height - compressedHeight;
+        
+        // Glow effect
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = color;
+        
+        // Base platform
+        ctx.fillStyle = '#444444';
+        ctx.fillRect(screenX, this.y + offsetY, this.width, compressedHeight);
+        
+        // Colored top with gradient
+        const gradient = ctx.createLinearGradient(
+            screenX, this.y + offsetY,
+            screenX, this.y + offsetY + compressedHeight
+        );
+        gradient.addColorStop(0, color);
+        gradient.addColorStop(1, this.type === 'yellow' ? '#cc9900' : 
+                                  this.type === 'pink' ? '#cc00cc' : '#cc0000');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(screenX, this.y + offsetY, this.width, compressedHeight / 2);
+        
+        // White outline
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#ffffff';
+        ctx.strokeRect(screenX, this.y + offsetY, this.width, compressedHeight);
+        
+        // Arrow indicator pointing up
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = color;
+        ctx.fillStyle = '#ffffff';
+        const centerX = screenX + this.width / 2;
+        const centerY = this.y + offsetY + compressedHeight / 2;
+        const arrowSize = this.width * 0.4;
+        
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY - arrowSize / 2);
+        ctx.lineTo(centerX - arrowSize / 2, centerY + arrowSize / 4);
+        ctx.lineTo(centerX + arrowSize / 2, centerY + arrowSize / 4);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.restore();
+    }
+
+    checkCollision(player, camera) {
+        const screenX = this.x - camera.x;
+        
+        // Check if player lands on top of pad
+        if (player.velocityY > 0 &&
+            player.x < screenX + this.width &&
+            player.x + player.size > screenX &&
+            player.y + player.size >= this.y &&
+            player.y + player.size <= this.y + this.height &&
+            !this.activated) {
+            
+            this.activate(player);
+            audioManager.playOrb();
+            return true;
+        }
+        return false;
+    }
+}
+
+// Portal for mode changes, speed changes, gravity changes, and size changes
+class Portal {
+    constructor(x, y, width, height, mode, portalType = 'mode') {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.mode = mode; // cube, ship, ball, wave, speed_slow, speed_normal, speed_fast, speed_faster, speed_fastest, gravity_normal, gravity_flip, size_normal, size_mini
+        this.portalType = portalType; // 'mode', 'speed', 'gravity', 'size'
         this.used = false;
     }
 
@@ -384,14 +497,29 @@ class Portal {
         ctx.save();
         
         let color;
-        // Portal colors
-        if (this.mode === 'cube') color = '#7dff7d'; // Bright green
-        else if (this.mode === 'ship') color = '#ff8844'; // Orange
-        else if (this.mode === 'ball') color = '#ff44ff'; // Magenta
-        else if (this.mode === 'wave') color = '#44bbff'; // Blue
-        else if (this.mode === 'ufo') color = '#00ffff'; // Cyan
-        else if (this.mode === 'robot') color = '#ffff44'; // Yellow
-        else if (this.mode === 'spider') color = '#cc44ff'; // Purple
+        // Portal colors based on type
+        if (this.portalType === 'speed') {
+            if (this.mode === 'speed_slow') color = '#ffaa00'; // Orange for slow
+            else if (this.mode === 'speed_normal') color = '#00ff00'; // Green for normal
+            else if (this.mode === 'speed_fast') color = '#00ffff'; // Cyan for fast
+            else if (this.mode === 'speed_faster') color = '#ff00ff'; // Magenta for faster
+            else if (this.mode === 'speed_fastest') color = '#ff0000'; // Red for fastest
+        } else if (this.portalType === 'gravity') {
+            if (this.mode === 'gravity_normal') color = '#0088ff'; // Blue for normal gravity
+            else if (this.mode === 'gravity_flip') color = '#ffff00'; // Yellow for flipped gravity
+        } else if (this.portalType === 'size') {
+            if (this.mode === 'size_normal') color = '#00ff00'; // Green for normal size
+            else if (this.mode === 'size_mini') color = '#ff8800'; // Orange for mini size
+        } else {
+            // Mode change portals
+            if (this.mode === 'cube') color = '#7dff7d'; // Bright green
+            else if (this.mode === 'ship') color = '#ff8844'; // Orange
+            else if (this.mode === 'ball') color = '#ff44ff'; // Magenta
+            else if (this.mode === 'wave') color = '#44bbff'; // Blue
+            else if (this.mode === 'ufo') color = '#00ffff'; // Cyan
+            else if (this.mode === 'robot') color = '#ffff44'; // Yellow
+            else if (this.mode === 'spider') color = '#cc44ff'; // Purple
+        }
         
         // Portal outer glow
         ctx.shadowBlur = 30;
@@ -441,7 +569,7 @@ class Portal {
         ctx.globalAlpha = fillPulse;
         ctx.fillRect(screenX + 4, this.y + 4, this.width - 8, this.height - 8);
         
-        // Icon in center based on mode
+        // Icon in center based on type and mode
         ctx.globalAlpha = 0.9;
         ctx.fillStyle = '#ffffff';
         ctx.shadowBlur = 15;
@@ -450,49 +578,84 @@ class Portal {
         const centerY = this.y + this.height / 2;
         const iconSize = this.width * 0.35;
         
-        if (this.mode === 'cube') {
-            // Draw small cube icon
-            ctx.fillRect(centerX - iconSize / 2, centerY - iconSize / 2, iconSize, iconSize);
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 2;
-            ctx.strokeRect(centerX - iconSize / 2, centerY - iconSize / 2, iconSize, iconSize);
-        } else if (this.mode === 'ship') {
-            // Draw small triangle
-            ctx.beginPath();
-            ctx.moveTo(centerX + iconSize / 2, centerY);
-            ctx.lineTo(centerX - iconSize / 2, centerY - iconSize / 2);
-            ctx.lineTo(centerX - iconSize / 2, centerY + iconSize / 2);
-            ctx.closePath();
-            ctx.fill();
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 2;
-            ctx.stroke();
-        } else if (this.mode === 'ball') {
-            // Draw small circle
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, iconSize / 2, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 2;
-            ctx.stroke();
-        } else if (this.mode === 'wave') {
-            // Draw wave symbol
-            ctx.beginPath();
-            ctx.moveTo(centerX - iconSize / 2, centerY);
-            ctx.lineTo(centerX, centerY - iconSize / 2);
-            ctx.lineTo(centerX + iconSize / 2, centerY);
-            ctx.lineTo(centerX, centerY + iconSize / 2);
-            ctx.closePath();
-            ctx.fill();
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 2;
-            ctx.stroke();
+        if (this.portalType === 'speed') {
+            // Draw speed indicator (arrows)
+            const arrowCount = this.mode === 'speed_slow' ? 1 : 
+                             this.mode === 'speed_normal' ? 2 : 
+                             this.mode === 'speed_fast' ? 3 :
+                             this.mode === 'speed_faster' ? 4 : 5;
+            for (let i = 0; i < arrowCount; i++) {
+                const arrowX = centerX - iconSize + (i * iconSize / 2);
+                ctx.beginPath();
+                ctx.moveTo(arrowX, centerY);
+                ctx.lineTo(arrowX + iconSize / 3, centerY - iconSize / 3);
+                ctx.lineTo(arrowX + iconSize / 3, centerY + iconSize / 3);
+                ctx.closePath();
+                ctx.fill();
+            }
+        } else if (this.portalType === 'gravity') {
+            // Draw gravity arrow
+            if (this.mode === 'gravity_normal') {
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY + iconSize / 2);
+                ctx.lineTo(centerX - iconSize / 3, centerY - iconSize / 3);
+                ctx.lineTo(centerX + iconSize / 3, centerY - iconSize / 3);
+                ctx.closePath();
+                ctx.fill();
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY - iconSize / 2);
+                ctx.lineTo(centerX - iconSize / 3, centerY + iconSize / 3);
+                ctx.lineTo(centerX + iconSize / 3, centerY + iconSize / 3);
+                ctx.closePath();
+                ctx.fill();
+            }
+        } else if (this.portalType === 'size') {
+            // Draw size indicator
+            const size = this.mode === 'size_mini' ? iconSize / 2 : iconSize;
+            ctx.fillRect(centerX - size / 2, centerY - size / 2, size, size);
+        } else {
+            // Mode change portal icons (existing code)
+            if (this.mode === 'cube') {
+                ctx.fillRect(centerX - iconSize / 2, centerY - iconSize / 2, iconSize, iconSize);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(centerX - iconSize / 2, centerY - iconSize / 2, iconSize, iconSize);
+            } else if (this.mode === 'ship') {
+                ctx.beginPath();
+                ctx.moveTo(centerX + iconSize / 2, centerY);
+                ctx.lineTo(centerX - iconSize / 2, centerY - iconSize / 2);
+                ctx.lineTo(centerX - iconSize / 2, centerY + iconSize / 2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            } else if (this.mode === 'ball') {
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, iconSize / 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            } else if (this.mode === 'wave') {
+                ctx.beginPath();
+                ctx.moveTo(centerX - iconSize / 2, centerY);
+                ctx.lineTo(centerX, centerY - iconSize / 2);
+                ctx.lineTo(centerX + iconSize / 2, centerY);
+                ctx.lineTo(centerX, centerY + iconSize / 2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
         }
         
         ctx.restore();
     }
 
-    checkCollision(player, camera) {
+    checkCollision(player, camera, game) {
         const screenX = this.x - camera.x;
         
         if (!this.used &&
@@ -501,7 +664,24 @@ class Portal {
             player.y < this.y + this.height &&
             player.y + player.size > this.y) {
             
-            player.changeMode(this.mode);
+            if (this.portalType === 'mode') {
+                player.changeMode(this.mode);
+            } else if (this.portalType === 'speed') {
+                const speedMap = {
+                    'speed_slow': 0.5,
+                    'speed_normal': 1.0,
+                    'speed_fast': 2.0,
+                    'speed_faster': 3.0,
+                    'speed_fastest': 4.0
+                };
+                if (game) game.speedMultiplier = speedMap[this.mode] || 1.0;
+            } else if (this.portalType === 'gravity') {
+                player.gravityFlipped = this.mode === 'gravity_flip';
+            } else if (this.portalType === 'size') {
+                player.isMini = this.mode === 'size_mini';
+                player.size = this.mode === 'size_mini' ? 20 : 30;
+            }
+            
             this.used = true;
         }
     }
