@@ -21,7 +21,8 @@ class Game {
         
         // Camera
         this.camera = { x: 0, y: 0 };
-        this.scrollSpeed = 5.77; // Exact GD 1x speed (approximately 311 pixels/second at 60fps)
+        this.scrollSpeed = 5.77; // Shape Dash 1x speed (approximately 311 pixels/second at 60fps)
+        this.cameraShake = { x: 0, y: 0, intensity: 0 };
         
         // Game stats
         this.attemptCount = 0;
@@ -228,6 +229,18 @@ class Game {
         // Update camera (scroll right)
         this.camera.x += this.scrollSpeed;
 
+        // Update camera shake
+        if (this.cameraShake.intensity > 0) {
+            this.cameraShake.x = (Math.random() - 0.5) * this.cameraShake.intensity;
+            this.cameraShake.y = (Math.random() - 0.5) * this.cameraShake.intensity;
+            this.cameraShake.intensity *= 0.9; // Decay
+            if (this.cameraShake.intensity < 0.1) {
+                this.cameraShake.intensity = 0;
+                this.cameraShake.x = 0;
+                this.cameraShake.y = 0;
+            }
+        }
+
         // Update player
         this.player.update(
             this.currentLevel.groundY,
@@ -279,6 +292,7 @@ class Game {
 
     handleDeath() {
         this.state = 'dead';
+        this.cameraShake.intensity = 15; // Trigger screen shake
         const progress = Math.floor((this.camera.x / this.currentLevel.length) * 100);
         document.getElementById('deathProgress').textContent = progress;
         document.getElementById('deathScreen').classList.remove('hidden');
@@ -298,6 +312,10 @@ class Game {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         if (!this.currentLevel || !this.player) return;
+
+        // Apply camera shake
+        this.ctx.save();
+        this.ctx.translate(this.cameraShake.x, this.cameraShake.y);
 
         // Draw grid background
         this.drawGrid();
@@ -340,6 +358,9 @@ class Game {
                 this.ctx.fillText(`CP${index + 1}`, screenX + 10, 30);
             });
         }
+
+        // Restore context after camera shake
+        this.ctx.restore();
     }
 
     drawGrid() {
@@ -369,7 +390,7 @@ class Game {
     drawGround() {
         const groundY = this.currentLevel.groundY;
         
-        // Ground line - exact GD style with white/light color
+        // Ground line - white line
         this.ctx.strokeStyle = '#ffffff';
         this.ctx.lineWidth = 4;
         this.ctx.shadowBlur = 0;
@@ -383,7 +404,7 @@ class Game {
         this.ctx.fillStyle = '#1a1a1a';
         this.ctx.fillRect(0, groundY, this.canvas.width, this.canvas.height - groundY);
         
-        // Ground grid pattern like GD
+        // Ground grid pattern
         this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
         this.ctx.lineWidth = 1;
         const gridSize = 30;

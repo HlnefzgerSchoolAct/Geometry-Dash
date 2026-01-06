@@ -14,7 +14,7 @@ class Obstacle {
         ctx.save();
         
         if (this.type === 'spike') {
-            // Draw triangle spike - exact GD style
+            // Draw triangle spike
             ctx.shadowBlur = 0;
             ctx.fillStyle = '#666666';
             ctx.strokeStyle = '#ffffff';
@@ -39,7 +39,7 @@ class Obstacle {
             ctx.fill();
             
         } else if (this.type === 'block') {
-            // Draw solid block - exact GD style with 3D effect
+            // Draw solid block with 3D effect
             ctx.shadowBlur = 0;
             
             // Main block face
@@ -70,20 +70,20 @@ class Obstacle {
             ctx.fill();
             
         } else if (this.type === 'sawblade') {
-            // Draw rotating sawblade - exact GD circular saw
+            // Draw rotating sawblade
             const centerX = screenX + this.width / 2;
             const centerY = this.y + this.height / 2;
             const radius = this.width / 2;
             
             ctx.translate(centerX, centerY);
-            ctx.rotate(Date.now() / 100); // Faster rotation like GD
+            ctx.rotate(Date.now() / 100); // Rotation speed
             
             ctx.shadowBlur = 0;
             ctx.fillStyle = '#666666';
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 2;
             
-            // Draw spikes around circle - exactly like GD sawblade
+            // Draw spikes around circle
             const spikes = 12;
             ctx.beginPath();
             for (let i = 0; i < spikes; i++) {
@@ -260,7 +260,7 @@ class Portal {
         ctx.save();
         
         let color;
-        // Exact GD portal colors
+        // Portal colors
         if (this.mode === 'cube') color = '#00ff00'; // Bright green
         else if (this.mode === 'ship') color = '#ff6600'; // Orange
         else if (this.mode === 'ball') color = '#ff00ff'; // Magenta
@@ -269,7 +269,7 @@ class Portal {
         else if (this.mode === 'robot') color = '#ffff00'; // Yellow
         else if (this.mode === 'spider') color = '#aa00ff'; // Purple
         
-        // Portal frame - exact GD style
+        // Portal frame
         ctx.shadowBlur = 20;
         ctx.shadowColor = color;
         ctx.strokeStyle = '#ffffff';

@@ -2,7 +2,7 @@
 const LEVELS = [
     // Level 1 - Beginner
     {
-        name: "Stereo Madness",
+        name: "Neon Runner",
         length: 5000,
         groundY: 500,
         backgroundColor: '#0a0a0a',
@@ -87,7 +87,7 @@ const LEVELS = [
     
     // Level 2 - Intermediate with mode changes
     {
-        name: "Back On Track",
+        name: "Shape Shifter",
         length: 6000,
         groundY: 500,
         backgroundColor: '#0a0a0a',
@@ -163,6 +163,101 @@ const LEVELS = [
             { x: 3700, y: 350, width: 40, height: 150, mode: 'cube' },
             { x: 4700, y: 350, width: 40, height: 150, mode: 'wave' },
             { x: 5450, y: 350, width: 40, height: 150, mode: 'cube' },
+        ]
+    },
+    
+    // Level 3 - Advanced with all game modes
+    {
+        name: "Quantum Leap",
+        length: 7000,
+        groundY: 500,
+        backgroundColor: '#0a0a0a',
+        obstacles: [
+            // Cube warmup
+            { x: 300, y: 460, width: 40, height: 40, type: 'spike' },
+            { x: 400, y: 400, width: 80, height: 20, type: 'block' },
+            { x: 550, y: 460, width: 40, height: 40, type: 'spike' },
+            { x: 600, y: 460, width: 40, height: 40, type: 'spike' },
+            
+            // UFO section (900-1500)
+            { x: 1000, y: 0, width: 600, height: 20, type: 'block' }, // Ceiling
+            { x: 1100, y: 300, width: 60, height: 20, type: 'block' },
+            { x: 1250, y: 200, width: 60, height: 20, type: 'block' },
+            { x: 1400, y: 350, width: 60, height: 20, type: 'block' },
+            
+            // Robot section (1600-2200)
+            { x: 1700, y: 460, width: 40, height: 40, type: 'spike' },
+            { x: 1800, y: 350, width: 100, height: 20, type: 'block' },
+            { x: 1950, y: 250, width: 100, height: 20, type: 'block' },
+            { x: 2100, y: 460, width: 40, height: 40, type: 'spike' },
+            { x: 2150, y: 460, width: 40, height: 40, type: 'spike' },
+            
+            // Spider section (2400-3000)
+            { x: 2500, y: 0, width: 600, height: 20, type: 'block' }, // Ceiling
+            { x: 2600, y: 300, width: 150, height: 20, type: 'block' },
+            { x: 2800, y: 300, width: 150, height: 20, type: 'block' },
+            { x: 2950, y: 150, width: 100, height: 20, type: 'block' },
+            
+            // Ship section (3200-3900)
+            { x: 3300, y: 0, width: 700, height: 30, type: 'block' }, // Ceiling
+            { x: 3350, y: 250, width: 80, height: 20, type: 'block' },
+            { x: 3500, y: 350, width: 80, height: 20, type: 'block' },
+            { x: 3650, y: 200, width: 80, height: 20, type: 'block' },
+            { x: 3800, y: 300, width: 80, height: 20, type: 'block' },
+            
+            // Ball section (4000-4700)
+            { x: 4100, y: 250, width: 150, height: 20, type: 'block' },
+            { x: 4300, y: 400, width: 150, height: 20, type: 'block' },
+            { x: 4500, y: 250, width: 150, height: 20, type: 'block' },
+            { x: 4700, y: 400, width: 150, height: 20, type: 'block' },
+            
+            // Wave section (4900-5600)
+            { x: 5000, y: 180, width: 200, height: 20, type: 'block' },
+            { x: 5200, y: 320, width: 200, height: 20, type: 'block' },
+            { x: 5400, y: 220, width: 200, height: 20, type: 'block' },
+            
+            // Final cube challenge (5700-6800)
+            { x: 5800, y: 430, width: 60, height: 60, type: 'sawblade' },
+            { x: 5950, y: 460, width: 40, height: 40, type: 'spike' },
+            { x: 6000, y: 460, width: 40, height: 40, type: 'spike' },
+            { x: 6050, y: 460, width: 40, height: 40, type: 'spike' },
+            { x: 6200, y: 350, width: 100, height: 20, type: 'block' },
+            { x: 6350, y: 380, width: 60, height: 60, type: 'sawblade' },
+            { x: 6500, y: 250, width: 100, height: 20, type: 'block' },
+            { x: 6650, y: 430, width: 60, height: 60, type: 'sawblade' },
+            
+            // Victory platform
+            { x: 6800, y: 400, width: 200, height: 100, type: 'block' },
+        ],
+        orbs: [
+            { x: 500, y: 450, size: 30, type: 'blue' },
+            { x: 1050, y: 270, size: 30, type: 'yellow' },
+            { x: 1350, y: 320, size: 30, type: 'blue' },
+            { x: 1900, y: 320, size: 30, type: 'pink' },
+            { x: 2050, y: 220, size: 30, type: 'yellow' },
+            { x: 2700, y: 270, size: 30, type: 'yellow' },
+            { x: 4150, y: 220, size: 30, type: 'yellow' },
+            { x: 5750, y: 400, size: 30, type: 'yellow' },
+            { x: 6450, y: 220, size: 30, type: 'pink' },
+        ],
+        coins: [
+            { x: 450, y: 370, size: 20 },
+            { x: 1300, y: 170, size: 20 },
+            { x: 2000, y: 220, size: 20 },
+            { x: 2850, y: 120, size: 20 },
+            { x: 3700, y: 170, size: 20 },
+            { x: 4400, y: 220, size: 20 },
+            { x: 5300, y: 190, size: 20 },
+            { x: 6550, y: 220, size: 20 },
+        ],
+        portals: [
+            { x: 900, y: 350, width: 40, height: 150, mode: 'ufo' },
+            { x: 1600, y: 350, width: 40, height: 150, mode: 'robot' },
+            { x: 2400, y: 350, width: 40, height: 150, mode: 'spider' },
+            { x: 3200, y: 350, width: 40, height: 150, mode: 'ship' },
+            { x: 4000, y: 350, width: 40, height: 150, mode: 'ball' },
+            { x: 4900, y: 350, width: 40, height: 150, mode: 'wave' },
+            { x: 5700, y: 350, width: 40, height: 150, mode: 'cube' },
         ]
     }
 ];
