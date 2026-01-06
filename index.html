@@ -12,12 +12,26 @@
 <body>
     <!-- Main Menu -->
     <div id="mainMenu" class="menu active">
-        <h1 class="game-title">SHAPE DASH</h1>
+        <h1 class="game-title">GEOMETRY DASH</h1>
+        <p class="game-subtitle">Shape Edition</p>
         <div class="menu-buttons">
-            <button class="menu-btn" onclick="selectLevel(0)">Level 1</button>
-            <button class="menu-btn" onclick="selectLevel(1)">Level 2</button>
-            <button class="menu-btn" onclick="selectLevel(2)">Level 3</button>
-            <button class="menu-btn practice" onclick="togglePracticeMode()">Practice Mode: <span id="practiceStatus">OFF</span></button>
+            <div class="level-buttons">
+                <button class="level-btn" onclick="selectLevel(0)">
+                    <span class="level-number">1</span>
+                    <span class="level-name">Neon Runner</span>
+                </button>
+                <button class="level-btn" onclick="selectLevel(1)">
+                    <span class="level-number">2</span>
+                    <span class="level-name">Shape Shifter</span>
+                </button>
+                <button class="level-btn" onclick="selectLevel(2)">
+                    <span class="level-number">3</span>
+                    <span class="level-name">Quantum Leap</span>
+                </button>
+            </div>
+            <button class="menu-btn practice" onclick="togglePracticeMode()">
+                <span class="practice-icon">⚙</span> Practice Mode: <span id="practiceStatus">OFF</span>
+            </button>
         </div>
     </div>
 
@@ -28,9 +42,16 @@
         <!-- Game UI -->
         <div id="gameUI">
             <div class="top-bar">
-                <div class="stat">Attempt: <span id="attemptCount">0</span></div>
-                <div class="stat level-name"><span id="levelName">Level</span></div>
-                <div class="stat">Progress: <span id="progressPercent">0</span>%</div>
+                <div class="stat attempt-counter">
+                    <span class="stat-label">Attempt</span>
+                    <span class="stat-value" id="attemptCount">0</span>
+                </div>
+                <div class="stat level-name">
+                    <span id="levelName">Level</span>
+                </div>
+                <div class="stat progress-counter">
+                    <span class="stat-value" id="progressPercent">0</span><span class="percent-symbol">%</span>
+                </div>
                 <button class="pause-btn" onclick="togglePause()">⏸</button>
             </div>
             <div class="progress-bar">
@@ -59,9 +80,22 @@
         <!-- Level Complete Screen -->
         <div id="completeScreen" class="hidden">
             <h2 class="complete-title">LEVEL COMPLETE!</h2>
+            <div class="stars-display">
+                <span class="star">⭐</span>
+                <span class="star">⭐</span>
+                <span class="star">⭐</span>
+            </div>
             <div class="complete-stats">
-                <p>Attempts: <span id="completeAttempts">0</span></p>
-                <p>Coins: <span id="completeCoins">0</span>/<span id="totalCoins">0</span></p>
+                <div class="stat-row">
+                    <span class="stat-icon">🏃</span>
+                    <span class="stat-text">Attempts:</span>
+                    <span class="stat-number" id="completeAttempts">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-icon">🪙</span>
+                    <span class="stat-text">Coins:</span>
+                    <span class="stat-number"><span id="completeCoins">0</span>/<span id="totalCoins">0</span></span>
+                </div>
             </div>
             <button class="menu-btn" onclick="exitToMenu()">Main Menu</button>
         </div>

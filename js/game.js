@@ -22,16 +22,23 @@ class Game {
         // Camera
         this.camera = { x: 0, y: 0 };
         this.scrollSpeed = 5.77; // Shape Dash 1x speed (approximately 311 pixels/second at 60fps)
+        this.speedMultiplier = 1.0; // For speed portals
         this.cameraShake = { x: 0, y: 0, intensity: 0 };
         
         // Background effects
         this.backgroundParticles = [];
         this.parallaxLayers = [];
+        this.pulseIntensity = 0;
+        this.respawnFade = 0; // For fade-in effect on respawn
         this.initBackgroundEffects();
         
         // Game stats
         this.attemptCount = 0;
         this.coinsCollected = 0;
+        
+        // Level start
+        this.levelStartCountdown = 0;
+        this.levelStartTime = 0;
         
         // Input handling
         this.keys = {};
@@ -191,6 +198,10 @@ class Game {
         
         this.state = 'playing';
         
+        // Start level with countdown
+        this.levelStartCountdown = 3;
+        this.levelStartTime = Date.now();
+        
         // Start game loop if not running
         if (!this.animationId) {
             this.lastTime = performance.now();
@@ -221,6 +232,9 @@ class Game {
             this.attemptCount++;
         }
         
+        // Reset speed multiplier
+        this.speedMultiplier = 1.0;
+        
         // Reset level objects
         this.currentLevel.orbs.forEach(orb => {
             orb.used = false;
@@ -228,10 +242,23 @@ class Game {
         });
         this.currentLevel.coins.forEach(coin => coin.collected = false);
         this.currentLevel.portals.forEach(portal => portal.used = false);
+        if (this.currentLevel.jumpPads) {
+            this.currentLevel.jumpPads.forEach(pad => {
+                pad.activated = false;
+                pad.animationTime = 0;
+            });
+        }
         
         // Update UI
         document.getElementById('attemptCount').textContent = this.attemptCount;
         document.getElementById('deathScreen').classList.add('hidden');
+        
+        // Respawn fade-in effect
+        this.respawnFade = 1.0;
+        
+        // Brief countdown on restart
+        this.levelStartCountdown = 2;
+        this.levelStartTime = Date.now();
         
         this.state = 'playing';
     }
@@ -267,8 +294,30 @@ class Game {
         if (this.state !== 'playing') return;
         if (!this.currentLevel || !this.player) return;
 
-        // Update camera (scroll right)
-        this.camera.x += this.scrollSpeed;
+        // Handle level start countdown
+        if (this.levelStartCountdown > 0) {
+            const elapsed = (Date.now() - this.levelStartTime) / 1000;
+            this.levelStartCountdown = Math.max(0, 3 - Math.floor(elapsed));
+            if (this.levelStartCountdown === 0) {
+                // Countdown finished, start scrolling
+            } else {
+                // Don't update anything during countdown
+                return;
+            }
+        }
+
+        // Update camera (scroll right with speed multiplier)
+        this.camera.x += this.scrollSpeed * this.speedMultiplier;
+
+        // Update pulse intensity based on gameplay
+        const progress = this.camera.x / this.currentLevel.length;
+        this.pulseIntensity = Math.sin(Date.now() / 500) * 0.3 + 0.5;
+
+        // Update respawn fade
+        if (this.respawnFade > 0) {
+            this.respawnFade -= 0.02; // Fade out quickly
+            if (this.respawnFade < 0) this.respawnFade = 0;
+        }
 
         // Update camera shake
         if (this.cameraShake.intensity > 0) {
@@ -293,8 +342,16 @@ class Game {
 
         // Check portals
         this.currentLevel.portals.forEach(portal => {
-            portal.checkCollision(this.player, this.camera);
+            portal.checkCollision(this.player, this.camera, this);
         });
+
+        // Check jump pads
+        if (this.currentLevel.jumpPads) {
+            this.currentLevel.jumpPads.forEach(pad => {
+                pad.update();
+                pad.checkCollision(this.player, this.camera);
+            });
+        }
 
         // Handle continuous jump for ship/wave mode
         if ((this.player.mode === 'ship' || this.player.mode === 'wave') && 
@@ -334,6 +391,10 @@ class Game {
     handleDeath() {
         this.state = 'dead';
         this.cameraShake.intensity = 15; // Trigger screen shake
+        
+        // Screen flash effect
+        this.flashScreen('#ff0000', 0.5);
+        
         const progress = Math.floor((this.camera.x / this.currentLevel.length) * 100);
         document.getElementById('deathProgress').textContent = progress;
         document.getElementById('deathScreen').classList.remove('hidden');
@@ -341,6 +402,9 @@ class Game {
 
     handleLevelComplete() {
         this.state = 'complete';
+        
+        // Screen flash effect
+        this.flashScreen('#00ff00', 0.3);
         
         // Update complete screen stats
         document.getElementById('completeAttempts').textContent = this.attemptCount;
@@ -354,22 +418,57 @@ class Game {
         audioManager.playCoin();
     }
 
+    flashScreen(color, intensity) {
+        // Create flash overlay
+        const flash = document.createElement('div');
+        flash.style.position = 'fixed';
+        flash.style.top = '0';
+        flash.style.left = '0';
+        flash.style.width = '100%';
+        flash.style.height = '100%';
+        flash.style.backgroundColor = color;
+        flash.style.opacity = intensity;
+        flash.style.pointerEvents = 'none';
+        flash.style.zIndex = '9999';
+        flash.style.transition = 'opacity 0.5s ease-out';
+        
+        document.body.appendChild(flash);
+        
+        // Fade out
+        setTimeout(() => {
+            flash.style.opacity = '0';
+        }, 50);
+        
+        // Remove after animation
+        setTimeout(() => {
+            document.body.removeChild(flash);
+        }, 600);
+    }
+
     render() {
         if (!this.currentLevel || !this.player) {
             // Clear canvas with default background
-            this.ctx.fillStyle = '#0a0a1e';
+            const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+            gradient.addColorStop(0, '#0f0f2e');
+            gradient.addColorStop(0.5, '#1a0f3e');
+            gradient.addColorStop(1, '#2a1a4e');
+            this.ctx.fillStyle = gradient;
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
             return;
         }
         
-        // Dynamic background based on progress
+        // Dynamic background based on progress and pulse
         const progress = Math.min(1, this.camera.x / this.currentLevel.length);
-        const bgColor1 = this.interpolateColor('#0a0a1e', '#1a1a3e', progress);
-        const bgColor2 = this.interpolateColor('#1a1a3e', '#2a1a4e', progress);
+        const pulse = this.pulseIntensity;
+        
+        const bgColor1 = this.interpolateColor('#0f0f2e', '#1a1a3e', progress * pulse);
+        const bgColor2 = this.interpolateColor('#1a0f3e', '#2a1a4e', progress);
+        const bgColor3 = this.interpolateColor('#2a1a4e', '#3a2a5e', progress * pulse);
         
         const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
         gradient.addColorStop(0, bgColor1);
-        gradient.addColorStop(1, bgColor2);
+        gradient.addColorStop(0.5, bgColor2);
+        gradient.addColorStop(1, bgColor3);
         this.ctx.fillStyle = gradient;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -385,6 +484,13 @@ class Game {
 
         // Draw grid background
         this.drawGrid();
+
+        // Render decorations (background layer)
+        if (this.currentLevel.decorations) {
+            this.currentLevel.decorations.forEach(decoration => {
+                decoration.render(this.ctx, this.camera);
+            });
+        }
 
         // Draw ground
         this.drawGround();
@@ -409,6 +515,13 @@ class Game {
             coin.render(this.ctx, this.camera);
         });
 
+        // Render jump pads
+        if (this.currentLevel.jumpPads) {
+            this.currentLevel.jumpPads.forEach(pad => {
+                pad.render(this.ctx, this.camera);
+            });
+        }
+
         // Render player
         this.player.render(this.ctx);
 
@@ -427,6 +540,25 @@ class Game {
 
         // Restore context after camera shake
         this.ctx.restore();
+
+        // Respawn fade overlay
+        if (this.respawnFade > 0) {
+            this.ctx.fillStyle = `rgba(0, 0, 0, ${this.respawnFade})`;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+
+        // Level start countdown display
+        if (this.levelStartCountdown > 0) {
+            this.ctx.save();
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = 'bold 100px "Russo One", Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.shadowBlur = 30;
+            this.ctx.shadowColor = '#00ff00';
+            this.ctx.fillText(this.levelStartCountdown, this.canvas.width / 2, this.canvas.height / 2);
+            this.ctx.restore();
+        }
     }
 
     interpolateColor(color1, color2, factor) {
@@ -537,11 +669,21 @@ class Game {
     drawGround() {
         const groundY = this.currentLevel.groundY;
         
-        // Ground top line - thicker white line with glow
+        // Ground top line - much thicker with intense glow (iconic GD look)
         this.ctx.strokeStyle = '#ffffff';
-        this.ctx.lineWidth = 6;
-        this.ctx.shadowBlur = 10;
-        this.ctx.shadowColor = '#7dff7d';
+        this.ctx.lineWidth = 8;
+        this.ctx.shadowBlur = 20;
+        this.ctx.shadowColor = '#00ffff';
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, groundY);
+        this.ctx.lineTo(this.canvas.width, groundY);
+        this.ctx.stroke();
+        
+        // Secondary glow layer for extra intensity
+        this.ctx.strokeStyle = '#00ffff';
+        this.ctx.lineWidth = 4;
+        this.ctx.shadowBlur = 30;
+        this.ctx.shadowColor = '#00ffff';
         this.ctx.beginPath();
         this.ctx.moveTo(0, groundY);
         this.ctx.lineTo(this.canvas.width, groundY);
@@ -555,10 +697,10 @@ class Game {
         this.ctx.fillStyle = groundGradient;
         this.ctx.fillRect(0, groundY, this.canvas.width, this.canvas.height - groundY);
         
-        // Ground checker pattern
-        this.ctx.strokeStyle = 'rgba(125, 255, 125, 0.1)';
-        this.ctx.lineWidth = 1;
-        const gridSize = 30;
+        // Ground checker pattern (iconic GD style)
+        this.ctx.strokeStyle = 'rgba(0, 255, 255, 0.15)';
+        this.ctx.lineWidth = 2;
+        const gridSize = 40;
         const offsetX = this.camera.x % gridSize;
         
         // Vertical lines
@@ -570,11 +712,23 @@ class Game {
         }
         
         // Horizontal lines
-        for (let y = groundY; y < this.canvas.height; y += gridSize) {
+        for (let y = groundY + gridSize; y < this.canvas.height; y += gridSize) {
             this.ctx.beginPath();
             this.ctx.moveTo(0, y);
             this.ctx.lineTo(this.canvas.width, y);
             this.ctx.stroke();
+        }
+        
+        // Checker fill pattern
+        this.ctx.fillStyle = 'rgba(0, 255, 255, 0.05)';
+        for (let x = -offsetX; x < this.canvas.width; x += gridSize) {
+            for (let y = groundY; y < this.canvas.height; y += gridSize) {
+                const gridX = Math.floor((x + this.camera.x) / gridSize);
+                const gridY = Math.floor(y / gridSize);
+                if ((gridX + gridY) % 2 === 0) {
+                    this.ctx.fillRect(x, y, gridSize, gridSize);
+                }
+            }
         }
     }
 
