@@ -88,11 +88,7 @@ class Player {
         if (this.mode === 'cube' || this.mode === 'robot') {
             this.velocityY += this.gravity * gravityMultiplier;
         } else if (this.mode === 'ball') {
-            if (this.isFlipped) {
-                this.velocityY += this.gravity * 0.85 * gravityMultiplier;
-            } else {
-                this.velocityY += this.gravity * 0.85 * gravityMultiplier;
-            }
+            this.velocityY += this.gravity * 0.85 * gravityMultiplier;
         } else if (this.mode === 'ship') {
             this.velocityY += this.gravity * 0.45 * gravityMultiplier; // Ship has much lighter gravity
         } else if (this.mode === 'wave') {

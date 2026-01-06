@@ -463,17 +463,42 @@ class JumpPad {
     checkCollision(player, camera) {
         const screenX = this.x - camera.x;
         
-        // Check if player lands on top of pad
-        if (player.velocityY > 0 &&
-            player.x < screenX + this.width &&
-            player.x + player.size > screenX &&
-            player.y + player.size >= this.y &&
-            player.y + player.size <= this.y + this.height &&
-            !this.activated) {
-            
-            this.activate(player);
-            audioManager.playOrb();
-            return true;
+        // Check if player lands on top of pad (normal gravity) or bottom (flipped gravity)
+        if (!this.activated) {
+            if (!player.gravityFlipped) {
+                // Normal gravity - check landing on top
+                if (player.velocityY > 0 &&
+                    player.x < screenX + this.width &&
+                    player.x + player.size > screenX &&
+                    player.y + player.size >= this.y &&
+                    player.y + player.size <= this.y + this.height) {
+                    
+                    this.activate(player);
+                    audioManager.playOrb();
+                    return true;
+                }
+            } else {
+                // Flipped gravity - check hitting bottom
+                if (player.velocityY < 0 &&
+                    player.x < screenX + this.width &&
+                    player.x + player.size > screenX &&
+                    player.y <= this.y + this.height &&
+                    player.y >= this.y) {
+                    
+                    // Apply jump in the flipped direction (positive = downward in flipped gravity)
+                    if (this.type === 'yellow') {
+                        player.velocityY = 16; // Medium jump (positive for flipped gravity)
+                    } else if (this.type === 'pink') {
+                        player.velocityY = 20; // High jump
+                    } else if (this.type === 'red') {
+                        player.velocityY = 24; // Very high jump
+                    }
+                    this.activated = true;
+                    this.animationTime = 10;
+                    audioManager.playOrb();
+                    return true;
+                }
+            }
         }
         return false;
     }
