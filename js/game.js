@@ -36,6 +36,10 @@ class Game {
         this.attemptCount = 0;
         this.coinsCollected = 0;
         
+        // Level start
+        this.levelStartCountdown = 0;
+        this.levelStartTime = 0;
+        
         // Input handling
         this.keys = {};
         this.mouseDown = false;
@@ -194,6 +198,10 @@ class Game {
         
         this.state = 'playing';
         
+        // Start level with countdown
+        this.levelStartCountdown = 3;
+        this.levelStartTime = Date.now();
+        
         // Start game loop if not running
         if (!this.animationId) {
             this.lastTime = performance.now();
@@ -248,6 +256,10 @@ class Game {
         // Respawn fade-in effect
         this.respawnFade = 1.0;
         
+        // Brief countdown on restart
+        this.levelStartCountdown = 2;
+        this.levelStartTime = Date.now();
+        
         this.state = 'playing';
     }
 
@@ -281,6 +293,18 @@ class Game {
     update(deltaTime) {
         if (this.state !== 'playing') return;
         if (!this.currentLevel || !this.player) return;
+
+        // Handle level start countdown
+        if (this.levelStartCountdown > 0) {
+            const elapsed = (Date.now() - this.levelStartTime) / 1000;
+            this.levelStartCountdown = Math.max(0, 3 - Math.floor(elapsed));
+            if (this.levelStartCountdown === 0) {
+                // Countdown finished, start scrolling
+            } else {
+                // Don't update anything during countdown
+                return;
+            }
+        }
 
         // Update camera (scroll right with speed multiplier)
         this.camera.x += this.scrollSpeed * this.speedMultiplier;
@@ -461,6 +485,13 @@ class Game {
         // Draw grid background
         this.drawGrid();
 
+        // Render decorations (background layer)
+        if (this.currentLevel.decorations) {
+            this.currentLevel.decorations.forEach(decoration => {
+                decoration.render(this.ctx, this.camera);
+            });
+        }
+
         // Draw ground
         this.drawGround();
 
@@ -514,6 +545,19 @@ class Game {
         if (this.respawnFade > 0) {
             this.ctx.fillStyle = `rgba(0, 0, 0, ${this.respawnFade})`;
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+
+        // Level start countdown display
+        if (this.levelStartCountdown > 0) {
+            this.ctx.save();
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = 'bold 100px "Russo One", Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.shadowBlur = 30;
+            this.ctx.shadowColor = '#00ff00';
+            this.ctx.fillText(this.levelStartCountdown, this.canvas.width / 2, this.canvas.height / 2);
+            this.ctx.restore();
         }
     }
 

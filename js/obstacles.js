@@ -479,6 +479,85 @@ class JumpPad {
     }
 }
 
+// DecorationObject - Non-interactive visual elements
+class DecorationObject {
+    constructor(x, y, size, type, color) {
+        this.x = x;
+        this.y = y;
+        this.size = size;
+        this.type = type; // spike, block, glow_orb, pulse_ring
+        this.color = color || '#00ff00';
+        this.animationPhase = Math.random() * Math.PI * 2;
+    }
+
+    render(ctx, camera) {
+        const screenX = this.x - camera.x;
+        
+        ctx.save();
+        ctx.globalAlpha = 0.3; // Semi-transparent for background
+        
+        if (this.type === 'spike') {
+            // Background spike decoration
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = this.color;
+            ctx.fillStyle = this.color;
+            
+            ctx.beginPath();
+            ctx.moveTo(screenX + this.size / 2, this.y);
+            ctx.lineTo(screenX + this.size, this.y + this.size);
+            ctx.lineTo(screenX, this.y + this.size);
+            ctx.closePath();
+            ctx.fill();
+            
+        } else if (this.type === 'block') {
+            // Background block decoration
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = this.color;
+            ctx.fillStyle = this.color;
+            ctx.fillRect(screenX, this.y, this.size, this.size);
+            
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(screenX, this.y, this.size, this.size);
+            
+        } else if (this.type === 'glow_orb') {
+            // Pulsing glow orb
+            const pulse = Math.sin(this.animationPhase + Date.now() / 400) * 0.3 + 0.7;
+            ctx.globalAlpha = 0.2 * pulse;
+            
+            const gradient = ctx.createRadialGradient(
+                screenX + this.size / 2, this.y + this.size / 2, 0,
+                screenX + this.size / 2, this.y + this.size / 2, this.size / 2
+            );
+            gradient.addColorStop(0, this.color);
+            gradient.addColorStop(1, 'transparent');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(screenX + this.size / 2, this.y + this.size / 2, this.size / 2 * pulse, 0, Math.PI * 2);
+            ctx.fill();
+            
+        } else if (this.type === 'pulse_ring') {
+            // Expanding ring effect
+            const ringPhase = (Date.now() / 1000 + this.animationPhase) % 2;
+            const ringAlpha = (1 - ringPhase / 2) * 0.4;
+            const ringRadius = this.size / 2 + (ringPhase * this.size);
+            
+            ctx.globalAlpha = ringAlpha;
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = this.color;
+            
+            ctx.beginPath();
+            ctx.arc(screenX + this.size / 2, this.y + this.size / 2, ringRadius, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        
+        ctx.restore();
+    }
+}
+
 // Portal for mode changes, speed changes, gravity changes, and size changes
 class Portal {
     constructor(x, y, width, height, mode, portalType = 'mode') {

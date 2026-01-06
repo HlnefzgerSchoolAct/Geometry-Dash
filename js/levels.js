@@ -88,6 +88,24 @@ const LEVELS = [
             { x: 1600, y: 480, width: 60, height: 20, type: 'yellow' },
             { x: 2850, y: 480, width: 60, height: 20, type: 'pink' },
             { x: 4350, y: 480, width: 60, height: 20, type: 'yellow' },
+        ],
+        decorations: [
+            // Background glow orbs
+            { x: 300, y: 200, size: 60, type: 'glow_orb', color: '#00ff00' },
+            { x: 800, y: 150, size: 80, type: 'glow_orb', color: '#00ffff' },
+            { x: 1400, y: 180, size: 70, type: 'glow_orb', color: '#00ff00' },
+            { x: 2000, y: 160, size: 90, type: 'glow_orb', color: '#00ffff' },
+            { x: 2700, y: 140, size: 75, type: 'glow_orb', color: '#00ff00' },
+            { x: 3500, y: 120, size: 85, type: 'glow_orb', color: '#00ffff' },
+            { x: 4200, y: 170, size: 70, type: 'glow_orb', color: '#00ff00' },
+            // Background decorative spikes
+            { x: 1000, y: 300, size: 40, type: 'spike', color: '#00ff00' },
+            { x: 1800, y: 250, size: 45, type: 'spike', color: '#00ffff' },
+            { x: 3200, y: 280, size: 50, type: 'spike', color: '#00ff00' },
+            // Pulse rings
+            { x: 1200, y: 200, size: 50, type: 'pulse_ring', color: '#00ff00' },
+            { x: 2500, y: 180, size: 60, type: 'pulse_ring', color: '#00ffff' },
+            { x: 3800, y: 160, size: 55, type: 'pulse_ring', color: '#00ff00' },
         ]
     },
     
@@ -303,6 +321,7 @@ function createLevelObjects(levelData) {
         coins: levelData.coins.map(c => new Coin(c.x, c.y, c.size)),
         portals: levelData.portals.map(p => new Portal(p.x, p.y, p.width, p.height, p.mode, p.portalType || 'mode')),
         jumpPads: (levelData.jumpPads || []).map(j => new JumpPad(j.x, j.y, j.width, j.height, j.type)),
+        decorations: (levelData.decorations || []).map(d => new DecorationObject(d.x, d.y, d.size, d.type, d.color)),
         name: levelData.name,
         length: levelData.length,
         groundY: levelData.groundY,

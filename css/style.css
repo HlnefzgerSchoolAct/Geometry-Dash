@@ -607,6 +607,30 @@ body {
 @media (max-width: 768px) {
     .game-title {
         font-size: 2.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .game-subtitle {
+        font-size: 1rem;
+        margin-top: -1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .level-buttons {
+        gap: 1rem;
+    }
+    
+    .level-btn {
+        width: 90px;
+        height: 90px;
+    }
+    
+    .level-number {
+        font-size: 2.2rem;
+    }
+    
+    .level-name {
+        font-size: 0.6rem;
     }
     
     .menu-btn {
@@ -617,10 +641,33 @@ body {
     
     .top-bar {
         padding: 0.5rem 1rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
     }
     
     .stat {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.6rem;
+    }
+    
+    .stat-label {
+        font-size: 0.6rem;
+    }
+    
+    .stat-value {
         font-size: 1rem;
+    }
+    
+    .death-title, .complete-title {
+        font-size: 2rem;
+    }
+    
+    .stars-display {
+        gap: 0.5rem;
+    }
+    
+    .star {
+        font-size: 2rem;
     }
 }
 
