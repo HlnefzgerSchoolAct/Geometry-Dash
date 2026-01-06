@@ -14,11 +14,22 @@ class Obstacle {
         ctx.save();
         
         if (this.type === 'spike') {
-            // Draw triangle spike
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = '#666666';
+            // Sharper spike with gradient from dark to light
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = 'rgba(100, 100, 100, 0.5)';
+            
+            // Gradient for depth
+            const gradient = ctx.createLinearGradient(
+                screenX + this.width / 2, this.y,
+                screenX + this.width / 2, this.y + this.height
+            );
+            gradient.addColorStop(0, '#999999');
+            gradient.addColorStop(0.5, '#666666');
+            gradient.addColorStop(1, '#444444');
+            
+            ctx.fillStyle = gradient;
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             
             // Main spike triangle
             ctx.beginPath();
@@ -30,7 +41,7 @@ class Obstacle {
             ctx.stroke();
             
             // Inner darker triangle for depth
-            ctx.fillStyle = '#444444';
+            ctx.fillStyle = '#333333';
             ctx.beginPath();
             ctx.moveTo(screenX + this.width / 2, this.y + this.height * 0.3);
             ctx.lineTo(screenX + this.width * 0.7, this.y + this.height);
@@ -38,63 +49,116 @@ class Obstacle {
             ctx.closePath();
             ctx.fill();
             
-        } else if (this.type === 'block') {
-            // Draw solid block with 3D effect
-            ctx.shadowBlur = 0;
+            // Highlight edge
+            ctx.strokeStyle = '#aaaaaa';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(screenX + this.width / 2, this.y);
+            ctx.lineTo(screenX, this.y + this.height);
+            ctx.stroke();
             
-            // Main block face
-            ctx.fillStyle = '#666666';
+        } else if (this.type === 'block') {
+            // Block with grid texture and stronger 3D effect
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            
+            // Main block face with gradient
+            const blockGradient = ctx.createLinearGradient(
+                screenX, this.y,
+                screenX + this.width, this.y + this.height
+            );
+            blockGradient.addColorStop(0, '#777777');
+            blockGradient.addColorStop(1, '#555555');
+            
+            ctx.fillStyle = blockGradient;
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 4;
             ctx.fillRect(screenX, this.y, this.width, this.height);
             ctx.strokeRect(screenX, this.y, this.width, this.height);
             
-            // 3D bottom edge
-            ctx.fillStyle = '#333333';
+            // Inner grid pattern (characteristic GD block texture)
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.lineWidth = 1;
+            const gridSize = 10;
+            
+            // Vertical lines
+            for (let x = screenX + gridSize; x < screenX + this.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, this.y);
+                ctx.lineTo(x, this.y + this.height);
+                ctx.stroke();
+            }
+            
+            // Horizontal lines
+            for (let y = this.y + gridSize; y < this.y + this.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(screenX, y);
+                ctx.lineTo(screenX + this.width, y);
+                ctx.stroke();
+            }
+            
+            // Highlight top edge
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(screenX, this.y);
+            ctx.lineTo(screenX + this.width, this.y);
+            ctx.stroke();
+            
+            // 3D bottom shadow (stronger)
+            ctx.fillStyle = '#222222';
             ctx.beginPath();
             ctx.moveTo(screenX, this.y + this.height);
             ctx.lineTo(screenX + this.width, this.y + this.height);
-            ctx.lineTo(screenX + this.width, this.y + this.height + 5);
-            ctx.lineTo(screenX, this.y + this.height + 5);
+            ctx.lineTo(screenX + this.width + 8, this.y + this.height + 8);
+            ctx.lineTo(screenX + 8, this.y + this.height + 8);
             ctx.closePath();
             ctx.fill();
             
-            // 3D right edge
-            ctx.fillStyle = '#444444';
+            // 3D right shadow (stronger)
+            ctx.fillStyle = '#333333';
             ctx.beginPath();
             ctx.moveTo(screenX + this.width, this.y);
-            ctx.lineTo(screenX + this.width + 5, this.y);
-            ctx.lineTo(screenX + this.width + 5, this.y + this.height + 5);
+            ctx.lineTo(screenX + this.width + 8, this.y + 8);
+            ctx.lineTo(screenX + this.width + 8, this.y + this.height + 8);
             ctx.lineTo(screenX + this.width, this.y + this.height);
             ctx.closePath();
             ctx.fill();
             
         } else if (this.type === 'sawblade') {
-            // Draw rotating sawblade
+            // Smoother rotating sawblade
             const centerX = screenX + this.width / 2;
             const centerY = this.y + this.height / 2;
             const radius = this.width / 2;
             
             ctx.translate(centerX, centerY);
-            ctx.rotate(Date.now() / 100); // Rotation speed
+            ctx.rotate(Date.now() / 80); // Smoother rotation
             
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = '#666666';
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = 'rgba(100, 100, 100, 0.7)';
+            
+            // Gradient for blade
+            const bladeGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
+            bladeGradient.addColorStop(0, '#888888');
+            bladeGradient.addColorStop(0.6, '#666666');
+            bladeGradient.addColorStop(1, '#444444');
+            
+            ctx.fillStyle = bladeGradient;
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             
-            // Draw spikes around circle
-            const spikes = 12;
+            // Draw better spike pattern
+            const spikes = 16;
             ctx.beginPath();
             for (let i = 0; i < spikes; i++) {
                 const angle = (i / spikes) * Math.PI * 2;
                 const nextAngle = ((i + 1) / spikes) * Math.PI * 2;
                 const midAngle = (angle + nextAngle) / 2;
                 
-                const x1 = Math.cos(angle) * radius * 0.7;
-                const y1 = Math.sin(angle) * radius * 0.7;
-                const x2 = Math.cos(midAngle) * radius;
-                const y2 = Math.sin(midAngle) * radius;
+                const x1 = Math.cos(angle) * radius * 0.65;
+                const y1 = Math.sin(angle) * radius * 0.65;
+                const x2 = Math.cos(midAngle) * radius * 1.1;
+                const y2 = Math.sin(midAngle) * radius * 1.1;
                 
                 if (i === 0) ctx.moveTo(x1, y1);
                 else ctx.lineTo(x1, y1);
@@ -104,14 +168,24 @@ class Obstacle {
             ctx.fill();
             ctx.stroke();
             
-            // Center circle
-            ctx.fillStyle = '#333333';
+            // Center circle with gradient
+            const centerGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, radius * 0.35);
+            centerGradient.addColorStop(0, '#555555');
+            centerGradient.addColorStop(1, '#222222');
+            
+            ctx.fillStyle = centerGradient;
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.arc(0, 0, radius * 0.3, 0, Math.PI * 2);
+            ctx.arc(0, 0, radius * 0.35, 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
+            
+            // Center dot
+            ctx.fillStyle = '#111111';
+            ctx.beginPath();
+            ctx.arc(0, 0, radius * 0.15, 0, Math.PI * 2);
+            ctx.fill();
         }
         
         ctx.restore();
@@ -146,7 +220,7 @@ class Orb {
         if (this.used) return;
         
         const screenX = this.x - camera.x;
-        const pulse = Math.sin(this.pulsePhase + Date.now() / 300) * 0.2 + 1;
+        const pulse = Math.sin(this.pulsePhase + Date.now() / 300) * 0.15 + 1;
         const radius = this.size / 2 * pulse;
         
         ctx.save();
@@ -156,35 +230,85 @@ class Orb {
         else if (this.type === 'blue') color = '#00ccff';
         else if (this.type === 'pink') color = '#ff00ff';
         
-        // Outer glow
-        ctx.shadowBlur = 30;
+        const centerX = screenX + this.size / 2;
+        const centerY = this.y + this.size / 2;
+        
+        // Pulsing ring animation
+        const ringPulse = (Date.now() % 2000) / 2000;
+        const ringRadius = radius * (1 + ringPulse * 0.8);
+        const ringAlpha = (1 - ringPulse) * 0.6;
+        
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        ctx.globalAlpha = ringAlpha;
+        ctx.shadowBlur = 20;
         ctx.shadowColor = color;
-        ctx.fillStyle = color;
-        ctx.globalAlpha = 0.3;
         ctx.beginPath();
-        ctx.arc(screenX + this.size / 2, this.y + this.size / 2, radius * 1.5, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY, ringRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Secondary pulsing ring
+        const ring2Pulse = ((Date.now() + 1000) % 2000) / 2000;
+        const ring2Radius = radius * (1 + ring2Pulse * 0.8);
+        const ring2Alpha = (1 - ring2Pulse) * 0.4;
+        
+        ctx.globalAlpha = ring2Alpha;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, ring2Radius, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Outer glow
+        ctx.globalAlpha = 0.4;
+        ctx.fillStyle = color;
+        ctx.shadowBlur = 40;
+        ctx.shadowColor = color;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius * 1.6, 0, Math.PI * 2);
         ctx.fill();
         
-        // Main orb
+        // Main orb with gradient
+        const orbGradient = ctx.createRadialGradient(
+            centerX - radius * 0.3, centerY - radius * 0.3, 0,
+            centerX, centerY, radius
+        );
+        orbGradient.addColorStop(0, '#ffffff');
+        orbGradient.addColorStop(0.3, color);
+        orbGradient.addColorStop(1, this.type === 'yellow' ? '#cc9900' : 
+                                     this.type === 'blue' ? '#0099cc' : '#cc00cc');
+        
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = orbGradient;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // White outline
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Inner white highlight
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowBlur = 15;
         ctx.globalAlpha = 0.8;
         ctx.beginPath();
-        ctx.arc(screenX + this.size / 2, this.y + this.size / 2, radius, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Inner circle
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(screenX + this.size / 2, this.y + this.size / 2, radius * 0.4, 0, Math.PI * 2);
+        ctx.arc(centerX - radius * 0.3, centerY - radius * 0.3, radius * 0.3, 0, Math.PI * 2);
         ctx.fill();
         
         // Ring if near and requires click
         if (this.isNear && this.requiresClick) {
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 3;
-            ctx.globalAlpha = Math.sin(Date.now() / 100) * 0.5 + 0.5;
+            ctx.lineWidth = 4;
+            ctx.globalAlpha = Math.sin(Date.now() / 100) * 0.4 + 0.6;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = color;
             ctx.beginPath();
-            ctx.arc(screenX + this.size / 2, this.y + this.size / 2, radius * 1.3, 0, Math.PI * 2);
+            ctx.arc(centerX, centerY, radius * 1.4, 0, Math.PI * 2);
             ctx.stroke();
         }
         
@@ -261,41 +385,77 @@ class Portal {
         
         let color;
         // Portal colors
-        if (this.mode === 'cube') color = '#00ff00'; // Bright green
-        else if (this.mode === 'ship') color = '#ff6600'; // Orange
-        else if (this.mode === 'ball') color = '#ff00ff'; // Magenta
-        else if (this.mode === 'wave') color = '#0099ff'; // Blue
+        if (this.mode === 'cube') color = '#7dff7d'; // Bright green
+        else if (this.mode === 'ship') color = '#ff8844'; // Orange
+        else if (this.mode === 'ball') color = '#ff44ff'; // Magenta
+        else if (this.mode === 'wave') color = '#44bbff'; // Blue
         else if (this.mode === 'ufo') color = '#00ffff'; // Cyan
-        else if (this.mode === 'robot') color = '#ffff00'; // Yellow
-        else if (this.mode === 'spider') color = '#aa00ff'; // Purple
+        else if (this.mode === 'robot') color = '#ffff44'; // Yellow
+        else if (this.mode === 'spider') color = '#cc44ff'; // Purple
         
-        // Portal frame
-        ctx.shadowBlur = 20;
+        // Portal outer glow
+        ctx.shadowBlur = 30;
         ctx.shadowColor = color;
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.2;
+        ctx.fillRect(screenX - 5, this.y - 5, this.width + 10, this.height + 10);
+        
+        // Portal frame (white outer)
+        ctx.globalAlpha = 1;
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 5;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#ffffff';
         ctx.strokeRect(screenX, this.y, this.width, this.height);
         
         // Inner colored frame
         ctx.strokeStyle = color;
-        ctx.lineWidth = 3;
-        ctx.strokeRect(screenX + 3, this.y + 3, this.width - 6, this.height - 6);
+        ctx.lineWidth = 4;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = color;
+        ctx.strokeRect(screenX + 4, this.y + 4, this.width - 8, this.height - 8);
         
-        // Portal fill (transparent colored)
+        // Animated vertical energy lines inside portal
+        ctx.shadowBlur = 0;
+        const lineCount = 8;
+        const lineSpeed = 3;
+        const offset = (Date.now() / 100) % (this.width / lineCount);
+        
+        for (let i = 0; i < lineCount + 1; i++) {
+            const lineX = screenX + (i * this.width / lineCount) + offset - this.width / lineCount;
+            const alpha = Math.sin((i / lineCount) * Math.PI * 2 + Date.now() / 500) * 0.3 + 0.5;
+            
+            const lineGradient = ctx.createLinearGradient(lineX, this.y, lineX, this.y + this.height);
+            lineGradient.addColorStop(0, `rgba(255, 255, 255, 0)`);
+            lineGradient.addColorStop(0.3, `rgba(255, 255, 255, ${alpha * 0.6})`);
+            lineGradient.addColorStop(0.7, `rgba(255, 255, 255, ${alpha * 0.6})`);
+            lineGradient.addColorStop(1, `rgba(255, 255, 255, 0)`);
+            
+            ctx.fillStyle = lineGradient;
+            ctx.fillRect(lineX, this.y, 3, this.height);
+        }
+        
+        // Portal fill (transparent colored with pulse)
+        const fillPulse = Math.sin(Date.now() / 400) * 0.05 + 0.15;
         ctx.fillStyle = color;
-        ctx.globalAlpha = 0.15;
-        ctx.fillRect(screenX, this.y, this.width, this.height);
+        ctx.globalAlpha = fillPulse;
+        ctx.fillRect(screenX + 4, this.y + 4, this.width - 8, this.height - 8);
         
         // Icon in center based on mode
-        ctx.globalAlpha = 0.8;
+        ctx.globalAlpha = 0.9;
         ctx.fillStyle = '#ffffff';
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = color;
         const centerX = screenX + this.width / 2;
         const centerY = this.y + this.height / 2;
-        const iconSize = this.width * 0.3;
+        const iconSize = this.width * 0.35;
         
         if (this.mode === 'cube') {
             // Draw small cube icon
             ctx.fillRect(centerX - iconSize / 2, centerY - iconSize / 2, iconSize, iconSize);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(centerX - iconSize / 2, centerY - iconSize / 2, iconSize, iconSize);
         } else if (this.mode === 'ship') {
             // Draw small triangle
             ctx.beginPath();
@@ -304,11 +464,17 @@ class Portal {
             ctx.lineTo(centerX - iconSize / 2, centerY + iconSize / 2);
             ctx.closePath();
             ctx.fill();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.stroke();
         } else if (this.mode === 'ball') {
             // Draw small circle
             ctx.beginPath();
             ctx.arc(centerX, centerY, iconSize / 2, 0, Math.PI * 2);
             ctx.fill();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.stroke();
         } else if (this.mode === 'wave') {
             // Draw wave symbol
             ctx.beginPath();
@@ -318,6 +484,9 @@ class Portal {
             ctx.lineTo(centerX, centerY + iconSize / 2);
             ctx.closePath();
             ctx.fill();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.stroke();
         }
         
         ctx.restore();
