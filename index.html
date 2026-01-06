@@ -51,6 +51,16 @@
             <button class="menu-btn" onclick="restartLevel()">Try Again</button>
             <button class="menu-btn" onclick="exitToMenu()">Main Menu</button>
         </div>
+
+        <!-- Level Complete Screen -->
+        <div id="completeScreen" class="hidden">
+            <h2 class="complete-title">LEVEL COMPLETE!</h2>
+            <div class="complete-stats">
+                <p>Attempts: <span id="completeAttempts">0</span></p>
+                <p>Coins: <span id="completeCoins">0</span>/<span id="totalCoins">0</span></p>
+            </div>
+            <button class="menu-btn" onclick="exitToMenu()">Main Menu</button>
+        </div>
     </div>
 
     <!-- Scripts -->

@@ -148,6 +148,7 @@ class Game {
         document.getElementById('mainMenu').classList.add('hidden');
         document.getElementById('gameContainer').classList.remove('hidden');
         document.getElementById('deathScreen').classList.add('hidden');
+        document.getElementById('completeScreen').classList.add('hidden');
         
         this.state = 'playing';
         
@@ -215,6 +216,7 @@ class Game {
         document.getElementById('mainMenu').classList.add('active');
         document.getElementById('pauseMenu').classList.add('hidden');
         document.getElementById('deathScreen').classList.add('hidden');
+        document.getElementById('completeScreen').classList.add('hidden');
         
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
@@ -299,11 +301,18 @@ class Game {
     }
 
     handleLevelComplete() {
-        // For now, just return to menu
-        setTimeout(() => {
-            alert(`Level Complete!\nAttempts: ${this.attemptCount}\nCoins: ${this.coinsCollected}/${this.currentLevel.coins.length}`);
-            this.exitToMenu();
-        }, 100);
+        this.state = 'complete';
+        
+        // Update complete screen stats
+        document.getElementById('completeAttempts').textContent = this.attemptCount;
+        document.getElementById('completeCoins').textContent = this.coinsCollected;
+        document.getElementById('totalCoins').textContent = this.currentLevel.coins.length;
+        
+        // Show complete screen
+        document.getElementById('completeScreen').classList.remove('hidden');
+        
+        // Play completion sound (reuse coin sound for now)
+        audioManager.playCoin();
     }
 
     render() {

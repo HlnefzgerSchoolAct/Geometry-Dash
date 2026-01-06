@@ -222,6 +222,42 @@ body {
     text-shadow: 0 0 10px #00ff00;
 }
 
+/* Level Complete Screen */
+#completeScreen {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(10, 10, 10, 0.95);
+    padding: 3rem;
+    border-radius: 20px;
+    text-align: center;
+    border: 2px solid #00ff00;
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
+}
+
+#completeScreen.hidden {
+    display: none;
+}
+
+.complete-title {
+    font-size: 2.5rem;
+    color: #00ff00;
+    text-shadow: 0 0 20px #00ff00;
+    margin-bottom: 1.5rem;
+    animation: pulse 1s infinite;
+}
+
+.complete-stats {
+    margin-bottom: 2rem;
+    font-size: 1.3rem;
+}
+
+.complete-stats p {
+    margin: 0.5rem 0;
+    color: #ffffff;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .game-title {
