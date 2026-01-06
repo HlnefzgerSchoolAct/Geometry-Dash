@@ -30,6 +30,9 @@ class Player {
         
         // Death particles
         this.deathParticles = [];
+        
+        // Landing/jumping particles
+        this.landingParticles = [];
     }
 
     jump() {
@@ -104,6 +107,12 @@ class Player {
         if (this.y + this.size >= groundY) {
             this.y = groundY - this.size;
             this.velocityY = 0;
+            
+            // Create landing particles when landing (transitioning from air to ground)
+            if (!this.isGrounded && this.mode === 'cube') {
+                this.createLandingParticles();
+            }
+            
             this.isGrounded = true;
             
             if (this.mode === 'cube') {
@@ -146,6 +155,9 @@ class Player {
             particle.alpha *= 0.95;
         });
 
+        // Update landing particles
+        this.updateLandingParticles();
+
         // Check collisions with obstacles
         this.checkObstacleCollisions(obstacles, camera);
         
@@ -154,6 +166,32 @@ class Player {
         
         // Check coin collisions
         this.checkCoinCollisions(coins, camera);
+    }
+
+    createLandingParticles() {
+        // Create small particles when landing
+        for (let i = 0; i < 5; i++) {
+            this.landingParticles.push({
+                x: this.x + Math.random() * this.size,
+                y: this.y + this.size,
+                velocityX: (Math.random() - 0.5) * 3,
+                velocityY: -Math.random() * 3,
+                size: Math.random() * 3 + 1,
+                alpha: 1,
+                color: this.primaryColor
+            });
+        }
+    }
+
+    updateLandingParticles() {
+        this.landingParticles.forEach(particle => {
+            particle.x += particle.velocityX;
+            particle.y += particle.velocityY;
+            particle.velocityY += 0.3; // Gravity
+            particle.alpha *= 0.94;
+        });
+        
+        this.landingParticles = this.landingParticles.filter(p => p.alpha > 0.01);
     }
 
     checkObstacleCollisions(obstacles, camera) {
@@ -224,16 +262,21 @@ class Player {
         this.isDead = true;
         audioManager.playDeath();
         
-        // Create death particles
-        for (let i = 0; i < 20; i++) {
+        // Create more satisfying death particles in an explosion pattern
+        const particleCount = 30;
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (i / particleCount) * Math.PI * 2;
+            const speed = 5 + Math.random() * 5;
             this.deathParticles.push({
                 x: this.x + this.size / 2,
                 y: this.y + this.size / 2,
-                velocityX: (Math.random() - 0.5) * 10,
-                velocityY: (Math.random() - 0.5) * 10,
-                size: Math.random() * 5 + 2,
+                velocityX: Math.cos(angle) * speed,
+                velocityY: Math.sin(angle) * speed,
+                size: Math.random() * 6 + 3,
                 alpha: 1,
-                color: this.color
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() - 0.5) * 0.3,
+                color: this.primaryColor
             });
         }
     }
@@ -242,8 +285,10 @@ class Player {
         this.deathParticles.forEach(particle => {
             particle.x += particle.velocityX;
             particle.y += particle.velocityY;
-            particle.velocityY += 0.3; // Gravity
-            particle.alpha *= 0.96;
+            particle.velocityY += 0.4; // Gravity
+            particle.velocityX *= 0.98; // Air resistance
+            particle.rotation += particle.rotationSpeed;
+            particle.alpha *= 0.95;
         });
         
         this.deathParticles = this.deathParticles.filter(p => p.alpha > 0.01);
@@ -255,10 +300,20 @@ class Player {
             return;
         }
 
-        // Render trail
+        // Render landing particles
+        this.renderLandingParticles(ctx);
+
+        // Render trail with gradient fade
         this.trail.forEach((particle, index) => {
             const alpha = particle.alpha * (index / this.trail.length);
-            ctx.fillStyle = `rgba(0, 255, 0, ${alpha * 0.4})`;
+            const gradient = ctx.createLinearGradient(
+                particle.x, particle.y,
+                particle.x + this.size * 0.8, particle.y + this.size * 0.7
+            );
+            gradient.addColorStop(0, `rgba(0, 255, 0, ${alpha * 0.6})`);
+            gradient.addColorStop(0.5, `rgba(125, 255, 125, ${alpha * 0.4})`);
+            gradient.addColorStop(1, `rgba(0, 255, 0, 0)`);
+            ctx.fillStyle = gradient;
             ctx.fillRect(particle.x, particle.y + this.size * 0.15, this.size * 0.8, this.size * 0.7);
         });
 
@@ -269,104 +324,147 @@ class Player {
         if (this.mode === 'cube') {
             ctx.rotate(this.rotation * Math.PI / 180);
             
-            // Draw cube with outline and inner square
-            ctx.shadowBlur = 15;
+            // Multi-layer glow effect
+            ctx.shadowBlur = 25;
             ctx.shadowColor = this.primaryColor;
             
-            // Outer cube
+            // Outer glow layer
+            ctx.fillStyle = this.primaryColor;
+            ctx.globalAlpha = 0.3;
+            ctx.fillRect(-this.size / 1.8, -this.size / 1.8, this.size * 1.1, this.size * 1.1);
+            ctx.globalAlpha = 1;
+            
+            // Main cube
             ctx.fillStyle = this.primaryColor;
             ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
             
-            // Outline
+            // Strong white outline
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = '#ffffff';
             ctx.strokeRect(-this.size / 2, -this.size / 2, this.size, this.size);
             
-            // Inner square (darker)
+            // Inner square with slight offset (characteristic GD look)
+            ctx.shadowBlur = 0;
             ctx.fillStyle = this.secondaryColor;
-            ctx.fillRect(-this.size / 2.5, -this.size / 2.5, this.size / 1.25, this.size / 1.25);
+            const innerSize = this.size / 1.5;
+            const offset = 1;
+            ctx.fillRect(-innerSize / 2 + offset, -innerSize / 2 + offset, innerSize, innerSize);
+            
+            // Inner square outline
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(-innerSize / 2 + offset, -innerSize / 2 + offset, innerSize, innerSize);
             
         } else if (this.mode === 'ship') {
-            // Draw ship - triangle with fire trail
-            ctx.shadowBlur = 15;
+            // More angular ship design
+            ctx.shadowBlur = 20;
             ctx.shadowColor = '#00ffff';
             ctx.fillStyle = '#00ffff';
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             
+            // Angular ship body
             ctx.beginPath();
             ctx.moveTo(this.size / 2, 0);
+            ctx.lineTo(-this.size / 3, this.size / 2.5);
             ctx.lineTo(-this.size / 2, this.size / 3);
-            ctx.lineTo(-this.size / 3, 0);
+            ctx.lineTo(-this.size / 2.5, 0);
             ctx.lineTo(-this.size / 2, -this.size / 3);
+            ctx.lineTo(-this.size / 3, -this.size / 2.5);
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
             
-            // Fire trail
-            ctx.fillStyle = '#ff6600';
-            ctx.beginPath();
-            ctx.moveTo(-this.size / 2, -this.size / 4);
-            ctx.lineTo(-this.size, 0);
-            ctx.lineTo(-this.size / 2, this.size / 4);
-            ctx.closePath();
-            ctx.fill();
+            // Flame trail particles
+            for (let i = 0; i < 3; i++) {
+                const flameX = -this.size / 2 - i * 8;
+                const flameSize = this.size / 3 - i * 3;
+                const flameAlpha = 0.8 - i * 0.2;
+                
+                ctx.fillStyle = i === 0 ? `rgba(255, 200, 0, ${flameAlpha})` : 
+                                i === 1 ? `rgba(255, 100, 0, ${flameAlpha})` :
+                                         `rgba(255, 50, 0, ${flameAlpha})`;
+                ctx.beginPath();
+                ctx.moveTo(flameX, -flameSize / 2);
+                ctx.lineTo(flameX - flameSize, 0);
+                ctx.lineTo(flameX, flameSize / 2);
+                ctx.closePath();
+                ctx.fill();
+            }
             
         } else if (this.mode === 'ball') {
-            // Draw ball - circle with rotation indicator
+            // Ball with dual-color scheme
             ctx.rotate(this.rotation * Math.PI / 180);
-            ctx.shadowBlur = 15;
+            ctx.shadowBlur = 20;
             ctx.shadowColor = '#ff00ff';
             
             // Outer circle
-            ctx.fillStyle = '#ff00ff';
+            ctx.fillStyle = this.primaryColor;
             ctx.beginPath();
             ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2);
             ctx.fill();
             
             // White outline
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             ctx.stroke();
             
-            // Inner circle
-            ctx.fillStyle = '#cc00cc';
+            // Inner circle (dual color)
+            ctx.fillStyle = this.secondaryColor;
             ctx.beginPath();
             ctx.arc(0, 0, this.size / 3, 0, Math.PI * 2);
             ctx.fill();
             
-            // Rotation line
+            // Characteristic line through center (rotation indicator)
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.moveTo(0, 0);
+            ctx.moveTo(-this.size / 2, 0);
             ctx.lineTo(this.size / 2, 0);
             ctx.stroke();
             
+            // Small circle at center
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(0, 0, 3, 0, Math.PI * 2);
+            ctx.fill();
+            
         } else if (this.mode === 'wave') {
-            // Draw wave - diamond shape with trail
-            ctx.shadowBlur = 15;
+            // Sharper diamond shape
+            ctx.shadowBlur = 20;
             ctx.shadowColor = '#ffff00';
             ctx.fillStyle = '#ffff00';
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             
             ctx.beginPath();
-            ctx.moveTo(-this.size / 2, 0);
-            ctx.lineTo(0, -this.size / 3);
-            ctx.lineTo(this.size / 2, 0);
-            ctx.lineTo(0, this.size / 3);
+            ctx.moveTo(-this.size / 1.8, 0);
+            ctx.lineTo(0, -this.size / 2.2);
+            ctx.lineTo(this.size / 1.8, 0);
+            ctx.lineTo(0, this.size / 2.2);
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
             
+            // Inner diamond
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.6)';
+            ctx.beginPath();
+            ctx.moveTo(-this.size / 3, 0);
+            ctx.lineTo(0, -this.size / 4);
+            ctx.lineTo(this.size / 3, 0);
+            ctx.lineTo(0, this.size / 4);
+            ctx.closePath();
+            ctx.fill();
+            
         } else if (this.mode === 'ufo') {
-            // Draw UFO - dome shape
-            ctx.shadowBlur = 15;
+            // UFO with better details
+            ctx.shadowBlur = 20;
             ctx.shadowColor = '#0088ff';
             ctx.fillStyle = '#0088ff';
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             
             // Top dome
             ctx.beginPath();
@@ -379,31 +477,55 @@ class Player {
             ctx.fillRect(-this.size / 2, -this.size / 4, this.size, this.size / 3);
             ctx.strokeRect(-this.size / 2, -this.size / 4, this.size, this.size / 3);
             
+            // Lights
+            for (let i = -1; i <= 1; i++) {
+                ctx.fillStyle = '#00ffff';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(i * this.size / 4, -this.size / 6, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
         } else if (this.mode === 'robot') {
-            // Draw robot - rectangular with legs
+            // Robot with better details
             ctx.rotate(this.rotation * Math.PI / 180);
-            ctx.shadowBlur = 15;
+            ctx.shadowBlur = 20;
             ctx.shadowColor = '#ff8800';
             ctx.fillStyle = '#ff8800';
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             
             // Body
             ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size * 0.8);
             ctx.strokeRect(-this.size / 2, -this.size / 2, this.size, this.size * 0.8);
             
-            // Eyes
-            ctx.fillStyle = '#ffffff';
+            // Eyes with glow
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = '#00ffff';
+            ctx.fillStyle = '#00ffff';
             ctx.fillRect(-this.size / 3, -this.size / 3, this.size / 6, this.size / 6);
             ctx.fillRect(this.size / 6, -this.size / 3, this.size / 6, this.size / 6);
             
+            // Antenna
+            ctx.strokeStyle = '#ff8800';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, -this.size / 2);
+            ctx.lineTo(0, -this.size / 1.5);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#ffff00';
+            ctx.beginPath();
+            ctx.arc(0, -this.size / 1.5, 3, 0, Math.PI * 2);
+            ctx.fill();
+            
         } else if (this.mode === 'spider') {
-            // Draw spider - angular shape with legs
-            ctx.shadowBlur = 15;
+            // Spider with better details
+            ctx.shadowBlur = 20;
             ctx.shadowColor = '#aa00ff';
             ctx.fillStyle = '#aa00ff';
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             
             // Body
             ctx.beginPath();
@@ -414,25 +536,72 @@ class Player {
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
+            
+            // Inner detail
+            ctx.fillStyle = '#cc00ff';
+            ctx.beginPath();
+            ctx.moveTo(0, -this.size / 4);
+            ctx.lineTo(this.size / 4, 0);
+            ctx.lineTo(0, this.size / 4);
+            ctx.lineTo(-this.size / 4, 0);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Spider legs (simple)
+            ctx.strokeStyle = '#aa00ff';
+            ctx.lineWidth = 2;
+            for (let i = -1; i <= 1; i += 2) {
+                ctx.beginPath();
+                ctx.moveTo(i * this.size / 3, -this.size / 4);
+                ctx.lineTo(i * this.size / 1.5, -this.size / 2);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(i * this.size / 3, this.size / 4);
+                ctx.lineTo(i * this.size / 1.5, this.size / 2);
+                ctx.stroke();
+            }
         }
         
         ctx.restore();
     }
 
     renderDeathParticles(ctx) {
-        // Death particle pattern - square particles exploding outward
+        // Death particle pattern - square particles exploding outward with rotation
         this.deathParticles.forEach(particle => {
-            ctx.fillStyle = `rgba(0, 255, 0, ${particle.alpha})`;
-            ctx.shadowBlur = 10;
+            const gradient = ctx.createRadialGradient(
+                particle.x, particle.y, 0,
+                particle.x, particle.y, particle.size
+            );
+            gradient.addColorStop(0, `rgba(0, 255, 0, ${particle.alpha})`);
+            gradient.addColorStop(0.5, `rgba(125, 255, 125, ${particle.alpha * 0.7})`);
+            gradient.addColorStop(1, `rgba(0, 255, 0, ${particle.alpha * 0.3})`);
+            
+            ctx.fillStyle = gradient;
+            ctx.shadowBlur = 15;
             ctx.shadowColor = '#00ff00';
             
-            // Draw small square particles
+            // Draw rotating square particles
             ctx.save();
             ctx.translate(particle.x, particle.y);
-            ctx.rotate(particle.velocityX / 5); // Slight rotation based on velocity
+            ctx.rotate(particle.rotation);
             ctx.fillRect(-particle.size / 2, -particle.size / 2, particle.size, particle.size);
             ctx.restore();
         });
+        ctx.shadowBlur = 0;
+    }
+
+    renderLandingParticles(ctx) {
+        // Landing particles - small particles when landing
+        this.landingParticles.forEach(particle => {
+            ctx.fillStyle = `rgba(0, 255, 0, ${particle.alpha})`;
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = '#00ff00';
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        ctx.shadowBlur = 0;
     }
 
     reset(x, y) {
@@ -445,6 +614,7 @@ class Player {
         this.isDead = false;
         this.trail = [];
         this.deathParticles = [];
+        this.landingParticles = [];
         this.mode = 'cube';
         this.isFlipped = false;
     }
