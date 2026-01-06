@@ -30,6 +30,10 @@ class Player {
         
         // Death particles
         this.deathParticles = [];
+        
+        // Landing/jumping particles
+        this.landingParticles = [];
+        this.wasGrounded = false;
     }
 
     jump() {
@@ -74,6 +78,7 @@ class Player {
     update(groundY, obstacles, orbs, coins, camera) {
         if (this.isDead) {
             this.updateDeathParticles();
+            this.updateLandingParticles();
             return;
         }
 
@@ -101,10 +106,16 @@ class Player {
         this.y += this.velocityY;
 
         // Ground collision
+        const wasAirborne = !this.isGrounded;
         if (this.y + this.size >= groundY) {
             this.y = groundY - this.size;
             this.velocityY = 0;
             this.isGrounded = true;
+            
+            // Create landing particles
+            if (wasAirborne && this.mode === 'cube') {
+                this.createLandingParticles();
+            }
             
             if (this.mode === 'cube') {
                 this.rotation = Math.round(this.rotation / 90) * 90;
@@ -146,6 +157,9 @@ class Player {
             particle.alpha *= 0.95;
         });
 
+        // Update landing particles
+        this.updateLandingParticles();
+
         // Check collisions with obstacles
         this.checkObstacleCollisions(obstacles, camera);
         
@@ -154,6 +168,32 @@ class Player {
         
         // Check coin collisions
         this.checkCoinCollisions(coins, camera);
+    }
+
+    createLandingParticles() {
+        // Create small particles when landing
+        for (let i = 0; i < 5; i++) {
+            this.landingParticles.push({
+                x: this.x + Math.random() * this.size,
+                y: this.y + this.size,
+                velocityX: (Math.random() - 0.5) * 3,
+                velocityY: -Math.random() * 3,
+                size: Math.random() * 3 + 1,
+                alpha: 1,
+                color: this.primaryColor
+            });
+        }
+    }
+
+    updateLandingParticles() {
+        this.landingParticles.forEach(particle => {
+            particle.x += particle.velocityX;
+            particle.y += particle.velocityY;
+            particle.velocityY += 0.3; // Gravity
+            particle.alpha *= 0.94;
+        });
+        
+        this.landingParticles = this.landingParticles.filter(p => p.alpha > 0.01);
     }
 
     checkObstacleCollisions(obstacles, camera) {
@@ -259,8 +299,12 @@ class Player {
     render(ctx) {
         if (this.isDead) {
             this.renderDeathParticles(ctx);
+            this.renderLandingParticles(ctx);
             return;
         }
+
+        // Render landing particles
+        this.renderLandingParticles(ctx);
 
         // Render trail with gradient fade
         this.trail.forEach((particle, index) => {
@@ -550,6 +594,19 @@ class Player {
         ctx.shadowBlur = 0;
     }
 
+    renderLandingParticles(ctx) {
+        // Landing particles - small particles when landing
+        this.landingParticles.forEach(particle => {
+            ctx.fillStyle = `rgba(0, 255, 0, ${particle.alpha})`;
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = '#00ff00';
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        ctx.shadowBlur = 0;
+    }
+
     reset(x, y) {
         this.x = x;
         this.y = y;
@@ -560,6 +617,7 @@ class Player {
         this.isDead = false;
         this.trail = [];
         this.deathParticles = [];
+        this.landingParticles = [];
         this.mode = 'cube';
         this.isFlipped = false;
     }
