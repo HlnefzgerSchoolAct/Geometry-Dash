@@ -33,7 +33,6 @@ class Player {
         
         // Landing/jumping particles
         this.landingParticles = [];
-        this.wasGrounded = false;
     }
 
     jump() {
@@ -106,16 +105,16 @@ class Player {
         this.y += this.velocityY;
 
         // Ground collision
-        const wasAirborne = !this.isGrounded;
         if (this.y + this.size >= groundY) {
             this.y = groundY - this.size;
             this.velocityY = 0;
-            this.isGrounded = true;
             
-            // Create landing particles
-            if (wasAirborne && this.mode === 'cube') {
+            // Create landing particles when landing (not already grounded)
+            if (!this.isGrounded && this.mode === 'cube') {
                 this.createLandingParticles();
             }
+            
+            this.isGrounded = true;
             
             if (this.mode === 'cube') {
                 this.rotation = Math.round(this.rotation / 90) * 90;

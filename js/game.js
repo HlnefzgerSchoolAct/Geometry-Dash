@@ -155,6 +155,12 @@ class Game {
     }
 
     startLevel(levelIndex) {
+        // Validate level index
+        if (levelIndex < 0 || levelIndex >= LEVELS.length) {
+            console.error('Invalid level index:', levelIndex);
+            return;
+        }
+        
         this.currentLevelIndex = levelIndex;
         this.currentLevel = createLevelObjects(LEVELS[levelIndex]);
         
